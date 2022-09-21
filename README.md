@@ -1,0 +1,1 @@
+# go-adbkit-core
