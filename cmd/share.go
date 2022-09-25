@@ -9,10 +9,10 @@ import (
 	"strconv"
 )
 
-var translateCmd = &cobra.Command{
-	Use:   "translate",
-	Short: "Provides an USB device over TCP using a translating proxy.",
-	Long:  "Provides an USB device over TCP using a translating proxy.",
+var shareCmd = &cobra.Command{
+	Use:   "share",
+	Short: "share the connected adb device in the network",
+	Long:  "share the connected adb device in the network",
 	Run: func(cmd *cobra.Command, args []string) {
 		getSerial()
 		client := adb.NewClient(fmt.Sprintf("%s:%d", localADBHost, localADBPort))
@@ -28,24 +28,10 @@ var translateCmd = &cobra.Command{
 	},
 }
 
-func getSerial() {
-	if serial == "" {
-		serialList, err := util.GetSerialList("")
-		if err != nil {
-			log.Panic(err)
-		}
-		serial = serialList[0]
-	}
-}
-
 var translatePort int
 
-var serial string
-
-var isTunnel bool
-
 func init() {
-	rootCmd.AddCommand(translateCmd)
-	translateCmd.Flags().IntVar(&translatePort, "translate-port", 6174, "translating proxy port")
-	translateCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
+	rootCmd.AddCommand(shareCmd)
+	shareCmd.Flags().IntVar(&translatePort, "translate-port", 6174, "translating proxy port")
+	shareCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
 }

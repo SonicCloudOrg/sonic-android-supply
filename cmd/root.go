@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"go-android-supply/src/util"
+	"log"
 	"os"
 )
 
@@ -14,6 +16,18 @@ var rootCmd = &cobra.Command{
 	Short: "Supply of Android Devices",
 	Long:  ``,
 }
+
+func getSerial() {
+	if serial == "" {
+		serialList, err := util.GetSerialList("")
+		if err != nil {
+			log.Panic(err)
+		}
+		serial = serialList[0]
+	}
+}
+
+var serial string
 
 // Execute error
 func Execute() {
