@@ -1,1 +1,1 @@
-# go-adbkit-core
+# sonic-android-supply
