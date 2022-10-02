@@ -18,9 +18,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/codeskyblue/fa/adb"
-	"github.com/spf13/cobra"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
+	"github.com/spf13/cobra"
 	"log"
 	"strconv"
 )
