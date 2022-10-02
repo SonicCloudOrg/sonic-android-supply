@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/codeskyblue/fa/adb"
 	"github.com/goinggo/mapstructure"
-	"go-android-supply/src/entiy"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/entiy"
 	"io/ioutil"
 	"log"
 	"strconv"

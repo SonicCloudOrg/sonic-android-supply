@@ -16,7 +16,7 @@
  */
 package main
 
-import "go-android-supply/cmd"
+import "github.com/SonicCloudOrg/sonic-android-supply/cmd"
 
 func main() {
 	cmd.Execute()

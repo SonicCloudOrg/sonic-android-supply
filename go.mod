@@ -1,4 +1,4 @@
-module go-android-supply
+module github.com/SonicCloudOrg/sonic-android-supply
 
 go 1.18
 

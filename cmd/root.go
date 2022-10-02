@@ -18,7 +18,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"go-android-supply/src/util"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
 	"log"
 	"os"
 )

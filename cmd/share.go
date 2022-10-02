@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"github.com/codeskyblue/fa/adb"
 	"github.com/spf13/cobra"
-	"go-android-supply/src/util"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
 	"log"
 	"strconv"
 )
