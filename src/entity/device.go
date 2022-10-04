@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package entiy
+package entity
 
 type Device struct {
 	Serial      string `json:"serial"`

@@ -20,8 +20,8 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 	"github.com/goinggo/mapstructure"
-	"github.com/SonicCloudOrg/sonic-android-supply/src/entiy"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -29,7 +29,7 @@ import (
 	"time"
 )
 
-func getIoDataOnPid(client *adb.Device, pid string) (*entiy.ProcessIO, error) {
+func getIoDataOnPid(client *adb.Device, pid string) (*entity.ProcessIO, error) {
 	lines, err := client.OpenShell(fmt.Sprintf("/bin/cat /proc/%s/io", pid))
 	if err != nil {
 		return nil, fmt.Errorf("exec command erro : " + fmt.Sprintf("/bin/cat /proc/%s/io", pid))
@@ -49,13 +49,13 @@ func getIoDataOnPid(client *adb.Device, pid string) (*entiy.ProcessIO, error) {
 		}
 		ioMess[strings.TrimRight(fields[0], ":")] = value
 	}
-	var io = &entiy.ProcessIO{}
+	var io = &entity.ProcessIO{}
 	err = mapstructure.Decode(ioMess, io)
 	//fmt.Println(lines)
 	return io, nil
 }
 
-func getStatOnPid(client *adb.Device, pid string) (stat *entiy.ProcessStat, err error) {
+func getStatOnPid(client *adb.Device, pid string) (stat *entity.ProcessStat, err error) {
 	lines, err := client.OpenShell(fmt.Sprintf("/bin/cat /proc/%s/stat", pid))
 	if err != nil {
 		return nil, fmt.Errorf("exec command erro : " + fmt.Sprintf("/bin/cat /proc/%s/stat", pid))
@@ -99,7 +99,7 @@ func GetPidOnAppName(client *adb.Device, appName string) (pid string, err error)
 	return "", fmt.Errorf("not find appname status")
 }
 
-func getStatusOnPid(client *adb.Device, pid string) (status *entiy.ProcessStatus, err error) {
+func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatus, err error) {
 	lines, err1 := client.OpenShell(fmt.Sprintf("/bin/cat /proc/%s/status", pid))
 	if err1 != nil {
 		return status, fmt.Errorf("exec command erro : " + fmt.Sprintf("/bin/cat /proc/%s/status", pid))
@@ -109,7 +109,7 @@ func getStatusOnPid(client *adb.Device, pid string) (status *entiy.ProcessStatus
 		log.Panic(err)
 	}
 	scanner := bufio.NewScanner(strings.NewReader(string(data)))
-	status = &entiy.ProcessStatus{}
+	status = &entity.ProcessStatus{}
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
@@ -207,9 +207,9 @@ func getStatusOnPid(client *adb.Device, pid string) (status *entiy.ProcessStatus
 	return status, err1
 }
 
-func newProcessStat(statStr string) (*entiy.ProcessStat, error) {
+func newProcessStat(statStr string) (*entity.ProcessStat, error) {
 	params := strings.Split(statStr, " ")
-	var processStat = &entiy.ProcessStat{}
+	var processStat = &entity.ProcessStat{}
 	for i, value := range params {
 		if i < 24 {
 			switch i {
@@ -365,7 +365,7 @@ var sleepTime = 1.0 // # seconds
 var HZ = 100.0      //# ticks/second
 var cpuUtilization = 0.0
 
-func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entiy.ProcessInfo, error) {
+func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entity.ProcessInfo, error) {
 	sleepTime = float64(interval)
 
 	stat, err := getStatOnPid(client, pid)
@@ -381,7 +381,7 @@ func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entiy.Proc
 	//	return nil, err
 	//}
 
-	var processInfo entiy.ProcessInfo
+	var processInfo entity.ProcessInfo
 	processInfo.PhyRSS = stat.Rss
 	processInfo.VmSize = stat.Vsize
 	if processInfo.Threads, err = strconv.Atoi(status.Threads); err != nil {

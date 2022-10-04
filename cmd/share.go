@@ -30,9 +30,7 @@ var shareCmd = &cobra.Command{
 	Short: "share the connected adb device in the network",
 	Long:  "share the connected adb device in the network",
 	Run: func(cmd *cobra.Command, args []string) {
-		getSerial()
-		client := adb.NewClient(fmt.Sprintf("%s:%d", localADBHost, localADBPort))
-		device := client.DeviceWithSerial(serial)
+		device := util.GetDevice(serial)
 
 		adbd := adb.NewADBDaemon(device)
 		fmt.Printf("Connect with: adb connect %s:%d\n", util.GetLocalIP(), translatePort)
