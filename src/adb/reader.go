@@ -6,8 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-
-	"github.com/qiniu/log"
+	"log"
 )
 
 /**

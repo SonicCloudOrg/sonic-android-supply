@@ -6,7 +6,6 @@ require (
 	github.com/goinggo/mapstructure v0.0.0-20140717182941-194205d9b4a9
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/pkg/errors v0.8.0
-	github.com/qiniu/log v0.0.0-20140728010919-a304a74568d6
 	github.com/spf13/cobra v1.4.0
 )
 

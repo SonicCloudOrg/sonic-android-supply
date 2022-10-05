@@ -6,12 +6,12 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"net"
 	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
-	"github.com/qiniu/log"
 )
 
 /**
@@ -178,7 +178,7 @@ func (sess *Session) onOpen(pkt Packet) {
 		return // Not throw error ?
 	}
 	name := string(pkt.BodySkipNull())
-	log.Infof("Calling #%s, remoteId: %d, localId: %d", name, remoteId, localId)
+	log.Printf("Calling #%s, remoteId: %d, localId: %d\n", name, remoteId, localId)
 
 	service := &TransportService{
 		localId:  localId,
@@ -199,7 +199,7 @@ func (sess *Session) forwardServicePacket(pkt Packet) {
 	service, ok := sess.services[pkt.Arg1] // localId
 	sess.mu.Unlock()
 	if !ok {
-		log.Warnf("Receive packet of already closed service: localId: %d", pkt.Arg1)
+		log.Printf("Receive packet of already closed service: localId: %d\n", pkt.Arg1)
 		return
 	}
 	service.handle(pkt)

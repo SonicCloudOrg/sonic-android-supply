@@ -1,10 +1,9 @@
 package adb
 
 import (
+	"log"
 	"net"
 	"sync"
-
-	"github.com/qiniu/log"
 )
 
 /**
@@ -41,7 +40,7 @@ func (s *ADBDaemon) Serve(ln net.Listener) error {
 			return err
 		}
 		remoteAddress := conn.RemoteAddr().String()
-		log.Infof("Incomming request from: %v", remoteAddress)
+		log.Printf("Incomming request from: %v\n", remoteAddress)
 
 		s.mu.Lock()
 		s.remotes[remoteAddress] = conn
