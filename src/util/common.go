@@ -19,7 +19,6 @@ package util
 import (
 	"fmt"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
-	"net"
 	"os"
 	"os/exec"
 	"regexp"
