@@ -4,7 +4,7 @@
 <p align="center">🎉Supply of ADB</p>
 <p align="center">
   <span>English |</span>
-  <a href="https://github.com/SonicCloudOrg/sonic-android-supply/blob/main/README_CN.md">  
+  <a href="https://github.com/SonicCloudOrg/sonic-android-supply/blob/master/README_CN.md">  
      简体中文
   </a>
 </p>

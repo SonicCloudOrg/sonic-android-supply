@@ -3,7 +3,7 @@
 </p>
 <p align="center">🎉原生ADB补充插件</p>
 <p align="center">
-  <a href="https://github.com/SonicCloudOrg/sonic-android-supply/blob/main/README.md">  
+  <a href="https://github.com/SonicCloudOrg/sonic-android-supply/blob/master/README.md">  
     English
   </a>
   <span>| 简体中文</span>
