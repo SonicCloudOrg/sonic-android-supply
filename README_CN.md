@@ -1,12 +1,12 @@
 <p align="center">
   <img width="80px" src="https://raw.githubusercontent.com/SonicCloudOrg/sonic-server/main/logo.png">
 </p>
-<p align="center">🎉Supply of ADB</p>
+<p align="center">🎉原生ADB补充插件</p>
 <p align="center">
-  <span>English |</span>
-  <a href="https://github.com/SonicCloudOrg/sonic-android-supply/blob/main/README_CN.md">  
-     简体中文
+  <a href="https://github.com/SonicCloudOrg/sonic-android-supply/blob/main/README.md">  
+    English
   </a>
+  <span>| 简体中文</span>
 </p>
 <p align="center">
   <a href="#">  
@@ -20,19 +20,19 @@
   </a>
 </p>
 
-### Official Website
-[Sonic Official Website](https://sonic-cloud.gitee.io)
-## Background
+### 官方网站
+[Sonic Official Website](https://sonic-cloud.gitee.io/#/SIB)
+## 背景
 
-#### What is sonic ?
+#### 什么是 Sonic ?
 
-> Sonic is a platform that integrates remote control debugging and automated testing of mobile devices, and strives to create a better use experience for global developers and test engineers.
+> Sonic是一个集移动设备远程控制调试与自动化测试的平台，用心为全球开发者以及测试工程师打造更好的使用体验。
 >
->If you want to participate, welcome to join us! 💪
+>  如果你想参与其中，欢迎加入！💪
 >
->If you want to support, you can give me a star. ⭐
+> 如果你想支持，可以给我一个star。⭐
 
-## Thanks
+## 感谢
 
 - [https://github.com/codeskyblue/fa](https://github.com/codeskyblue/fa)
 - [https://github.com/openstf/adbkit](https://github.com/openstf/adbkit)

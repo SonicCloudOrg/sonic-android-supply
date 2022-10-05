@@ -18,34 +18,19 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
-	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
+
 	"github.com/spf13/cobra"
-	"log"
-	"strconv"
 )
 
-var shareCmd = &cobra.Command{
-	Use:   "share",
-	Short: "share the connected adb device in the network",
-	Long:  "share the connected adb device in the network",
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Version code of sas",
+	Long:  "Version code of sas",
 	Run: func(cmd *cobra.Command, args []string) {
-		device := util.GetDevice(serial)
-
-		adbd := adb.NewADBDaemon(device)
-		fmt.Printf("Connect with port :%d\n", translatePort)
-		err := adbd.ListenAndServe(":" + strconv.Itoa(translatePort))
-		if err != nil {
-			log.Panic(err)
-		}
-		return
+		fmt.Println("SONIC_VERSION")
 	},
 }
 
-var translatePort int
-
 func init() {
-	rootCmd.AddCommand(shareCmd)
-	shareCmd.Flags().IntVar(&translatePort, "translate-port", 6174, "translating proxy port")
-	shareCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
+	rootCmd.AddCommand(versionCmd)
 }

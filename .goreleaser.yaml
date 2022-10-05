@@ -1,0 +1,27 @@
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - id: "sonic-android-supply"
+    asmflags:
+      - all=-trimpath=C:/Users/ZHOUYIXUN/Desktop/sonic-android-supply
+    gcflags:
+      - all=-trimpath=C:/Users/ZHOUYIXUN/Desktop/sonic-android-supply
+    ldflags:
+      - -s -w
+    main: .
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - "386"
+      - amd64
+      - arm64
+archives:
+  - replacements:
+      darwin: macosx
+      linux: linux
+      windows: windows
+      386: x86
+      amd64: x86_64
