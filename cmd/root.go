@@ -22,9 +22,20 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "sab",
+	Use:   "sas",
 	Short: "Supply of Android Devices",
-	Long:  ``,
+	Long: `
+   ▄▄▄▄      ▄▄▄▄    ▄▄▄   ▄▄   ▄▄▄▄▄▄      ▄▄▄▄
+ ▄█▀▀▀▀█    ██▀▀██   ███   ██   ▀▀██▀▀    ██▀▀▀▀█
+ ██▄       ██    ██  ██▀█  ██     ██     ██▀
+  ▀████▄   ██    ██  ██ ██ ██     ██     ██
+      ▀██  ██    ██  ██  █▄██     ██     ██▄
+ █▄▄▄▄▄█▀   ██▄▄██   ██   ███   ▄▄██▄▄    ██▄▄▄▄█
+  ▀▀▀▀▀      ▀▀▀▀    ▀▀   ▀▀▀   ▀▀▀▀▀▀      ▀▀▀▀
+
+             Author: SonicCloudOrg
+https://github.com/SonicCloudOrg/sonic-android-supply
+`,
 }
 
 var serial string

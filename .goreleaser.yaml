@@ -10,6 +10,7 @@ builds:
     ldflags:
       - -s -w
     main: .
+    binary: sas
     goos:
       - linux
       - windows
