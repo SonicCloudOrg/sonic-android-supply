@@ -3,6 +3,8 @@ before:
     - go mod tidy
 builds:
   - id: "sonic-android-supply"
+    env:
+      - CGO_ENABLED=0
     asmflags:
       - all=-trimpath=C:/Users/ZHOUYIXUN/Desktop/sonic-android-supply
     gcflags:
