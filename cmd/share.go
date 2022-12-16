@@ -14,7 +14,6 @@
  *
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
- *
  */
 package cmd
 
@@ -29,8 +28,8 @@ import (
 
 var shareCmd = &cobra.Command{
 	Use:   "share",
-	Short: "share the connected adb device in the network",
-	Long:  "share the connected adb device in the network",
+	Short: "Share the connected adb device in the network",
+	Long:  "Share the connected adb device in the network",
 	Run: func(cmd *cobra.Command, args []string) {
 		device := util.GetDevice(serial)
 

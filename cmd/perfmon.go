@@ -14,7 +14,6 @@
  *
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
- *
  */
 package cmd
 
@@ -25,8 +24,8 @@ import (
 
 var perfmonCmd = &cobra.Command{
 	Use:   "perfmon",
-	Short: "get device performance",
-	Long:  "get device performance",
+	Short: "Get device performance",
+	Long:  "Get device performance",
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
