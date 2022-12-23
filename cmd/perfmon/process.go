@@ -19,7 +19,7 @@ package perfmon
 
 import (
 	"fmt"
-	"github.com/SonicCloudOrg/sonic-android-supply/src/perfmon"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/perfmonUtil"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
 	"github.com/spf13/cobra"
 	"log"
@@ -42,7 +42,7 @@ var processPerfmonCmd = &cobra.Command{
 		device := util.GetDevice(serial)
 		if pid == "" {
 			// todo 优化
-			pid, err = perfmon.GetPidOnAppName(device, appName)
+			pid, err = perfmonUtil.GetPidOnAppName(device, appName)
 			if err != nil {
 				log.Panic(err)
 			}
@@ -57,7 +57,7 @@ var processPerfmonCmd = &cobra.Command{
 				done = true
 				fmt.Println()
 			case <-timer:
-				if processInfo, err := perfmon.GetProcessInfo(device, pid, 1); err != nil {
+				if processInfo, err := perfmonUtil.GetProcessInfo(device, pid, 1); err != nil {
 					log.Fatal(err)
 				} else {
 					if format {

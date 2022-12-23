@@ -15,10 +15,11 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package perfmon
+package perfmonUtil
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 	"io"
@@ -301,4 +302,18 @@ func getCPU(client *adb.Device, stats *entity.SystemStats) (err error) {
 END:
 	preCPU = nowCPU
 	return
+}
+
+func getFPS(client *adb.Device) (err error) {
+	lines, err := client.OpenShell("dumpsys gfxinfo")
+	if err != nil {
+		return
+	}
+
+	scanner := bufio.NewScanner(lines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		fmt.Println(line)
+	}
+	return nil
 }
