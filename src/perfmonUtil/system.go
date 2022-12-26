@@ -313,6 +313,9 @@ func getFPS(client *adb.Device) (err error) {
 	scanner := bufio.NewScanner(lines)
 	for scanner.Scan() {
 		line := scanner.Text()
+		if strings.Contains(line, "jank") {
+			fmt.Println("-============-")
+		}
 		fmt.Println(line)
 	}
 	return nil
