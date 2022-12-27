@@ -402,3 +402,20 @@ func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entity.Pro
 	processInfo.TimeStamp = time.Now().UnixNano()
 	return &processInfo, nil
 }
+
+func getFPS(client *adb.Device) (err error) {
+	lines, err := client.OpenShell("dumpsys gfxinfo")
+	if err != nil {
+		return
+	}
+
+	scanner := bufio.NewScanner(lines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "jank") {
+			fmt.Println("-============-")
+		}
+		fmt.Println(line)
+	}
+	return nil
+}

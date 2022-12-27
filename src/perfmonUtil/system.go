@@ -19,7 +19,6 @@ package perfmonUtil
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 	"io"
@@ -302,21 +301,4 @@ func getCPU(client *adb.Device, stats *entity.SystemStats) (err error) {
 END:
 	preCPU = nowCPU
 	return
-}
-
-func getFPS(client *adb.Device) (err error) {
-	lines, err := client.OpenShell("dumpsys gfxinfo")
-	if err != nil {
-		return
-	}
-
-	scanner := bufio.NewScanner(lines)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "jank") {
-			fmt.Println("-============-")
-		}
-		fmt.Println(line)
-	}
-	return nil
 }
