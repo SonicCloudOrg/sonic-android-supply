@@ -16,3 +16,49 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package perfmon
+
+import (
+	"fmt"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/perfmonUtil"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
+	"github.com/spf13/cobra"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+var systemPerfmonCmd = &cobra.Command{
+	Use:   "system",
+	Short: "get system performance data",
+	Long:  "get system performance data",
+	Run: func(cmd *cobra.Command, args []string) {
+		// todo
+		device := util.GetDevice(serial)
+		perfmonUtil.GetSystemStats(device)
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+
+		timer := time.Tick(time.Duration(interval * int(time.Second)))
+		done := false
+		for !done {
+			select {
+			case <-sig:
+				done = true
+				return
+			case <-timer:
+				status := perfmonUtil.GetSystemStats(device)
+				data := util.ResultData(status)
+				fmt.Println(util.Format(data, isFormat, isJson))
+			}
+		}
+	},
+}
+
+func initSystemPerfmon() {
+	perfmonRootCMD.AddCommand(systemPerfmonCmd)
+	systemPerfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
+	systemPerfmonCmd.Flags().IntVarP(&interval, "interval", "i", 1, "data refresh time")
+	systemPerfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
+	systemPerfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
+}

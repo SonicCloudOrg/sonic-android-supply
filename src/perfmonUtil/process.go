@@ -25,6 +25,7 @@ import (
 	"github.com/goinggo/mapstructure"
 	"io/ioutil"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -68,36 +69,25 @@ func getStatOnPid(client *adb.Device, pid string) (stat *entity.ProcessStat, err
 	return newProcessStat(string(data))
 }
 
-func GetPidOnAppName(client *adb.Device, appName string) (pid string, err error) {
-
-	lines, err := client.OpenShell("/bin/ls /proc/")
-
+func GetPidOnPackageName(client *adb.Device, appName string) (pid string, err error) {
+	dumpsysData, err := client.OpenShell("dumpsys activity top")
 	if err != nil {
-		return "", fmt.Errorf("exec command erro : /bin/ls /proc/")
+		return "", fmt.Errorf("exec command erro : dumpsys activity top")
 	}
-	data, err := ioutil.ReadAll(lines)
+	data, err := ioutil.ReadAll(dumpsysData)
 	if err != nil {
 		log.Panic(err)
 	}
-	scanner := bufio.NewScanner(strings.NewReader(string(data)))
-	for scanner.Scan() {
-		line := scanner.Text()
-		parts := strings.Fields(line)
-		for _, part := range parts {
-			if IsNum(part) {
-				status, err := getStatusOnPid(client, part)
-				if err != nil {
-					continue
-				}
-				fmt.Println(status.Name, status.Pid)
-				if status.Name == appName {
-					return status.Pid, nil
-				}
-			}
-		}
 
+	reg := regexp.MustCompile(fmt.Sprintf("ACTIVITY\\s%s.*", appName))
+
+	regResult := reg.FindString(string(data))
+
+	if regResult == "" {
+		return "", fmt.Errorf("find app pid erro : dumpsys activity top not the app")
 	}
-	return "", fmt.Errorf("not find appname status")
+	regResultSplit := strings.Split(regResult, " ")
+	return regResultSplit[len(regResultSplit)-1][4:], nil
 }
 
 func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatus, err error) {

@@ -71,7 +71,6 @@ type SystemStats struct {
 	MemCached   uint64
 	SwapTotal   uint64
 	SwapFree    uint64
-	FSInfos     []*SystemFSInfo
 	NetworkInfo map[string]*SystemNetworkInfo
 	CPU         *SystemCPUInfo // or []SystemCPUInfo to get all the cpu-core's stats?
 	TimeStamp   int64
@@ -108,17 +107,7 @@ Memory:
 		escBrightWhite, fmtBytes(stats.SwapFree), escReset,
 		escBrightWhite, fmtBytes(stats.SwapTotal), escReset,
 	)
-	if len(stats.FSInfos) > 0 {
-		result += "Filesystems:\n"
-		for _, fs := range stats.FSInfos {
-			result += fmt.Sprintf("    %s%8s%s: %s%s%s free of %s%s%s\n",
-				escBrightWhite, fs.MountPoint, escReset,
-				escBrightWhite, fmtBytes(fs.Free), escReset,
-				escBrightWhite, fmtBytes(fs.Used+fs.Free), escReset,
-			)
-		}
-		result += "\n"
-	}
+
 	if len(stats.NetworkInfo) > 0 {
 		result += "Network Interfaces:\n"
 		keys := make([]string, 0, len(stats.NetworkInfo))
@@ -148,6 +137,11 @@ Memory:
 		result += "\n"
 	}
 	return result
+}
+
+func (stats *SystemStats) ToFormat() string {
+	str, _ := json.MarshalIndent(stats, "", "\t")
+	return string(str)
 }
 
 func (stats *SystemStats) ToJson() string {

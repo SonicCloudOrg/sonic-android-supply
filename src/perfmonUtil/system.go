@@ -38,7 +38,6 @@ func getAllStats(client *adb.Device, stats *entity.SystemStats) {
 	getUptime(client, stats)
 	getHostname(client, stats)
 	getMemInfo(client, stats)
-	getFSInfo(client, stats)
 	getInterfaces(client, stats)
 	getInterfaceInfo(client, stats)
 	getCPU(client, stats)
@@ -113,41 +112,6 @@ func getMemInfo(client *adb.Device, stats *entity.SystemStats) (err error) {
 			}
 		}
 	}
-	return
-}
-
-func getFSInfo(client *adb.Device, stats *entity.SystemStats) (err error) {
-	lines, err := client.OpenShell("/bin/df -B1")
-	if err != nil {
-		return
-	}
-
-	scanner := bufio.NewScanner(lines)
-	flag := 0
-	for scanner.Scan() {
-		line := scanner.Text()
-		parts := strings.Fields(line)
-		n := len(parts)
-		dev := n > 0 && strings.Index(parts[0], "/dev/") == 0
-		if n == 1 && dev {
-			flag = 1
-		} else if (n == 5 && flag == 1) || (n == 6 && dev) {
-			i := flag
-			flag = 0
-			used, err := strconv.ParseUint(parts[2-i], 10, 64)
-			if err != nil {
-				continue
-			}
-			free, err := strconv.ParseUint(parts[3-i], 10, 64)
-			if err != nil {
-				continue
-			}
-			stats.FSInfos = append(stats.FSInfos, &entity.SystemFSInfo{
-				MountPoint: parts[5-i], Used: used, Free: free,
-			})
-		}
-	}
-
 	return
 }
 
@@ -286,10 +250,14 @@ func getCPU(client *adb.Device, stats *entity.SystemStats) (err error) {
 		}
 	}
 	if preCPU.Total == 0 { // having no pre raw cpu data
-		goto END
+		preCPU = nowCPU
+		return nil
 	}
 
 	total = float32(nowCPU.Total - preCPU.Total)
+	if stats.CPU == nil {
+		stats.CPU = &entity.SystemCPUInfo{}
+	}
 	stats.CPU.User = float32(nowCPU.User-preCPU.User) / total * 100
 	stats.CPU.Nice = float32(nowCPU.Nice-preCPU.Nice) / total * 100
 	stats.CPU.System = float32(nowCPU.System-preCPU.System) / total * 100
@@ -298,7 +266,5 @@ func getCPU(client *adb.Device, stats *entity.SystemStats) (err error) {
 	stats.CPU.Irq = float32(nowCPU.Irq-preCPU.Irq) / total * 100
 	stats.CPU.SoftIrq = float32(nowCPU.SoftIrq-preCPU.SoftIrq) / total * 100
 	stats.CPU.Guest = float32(nowCPU.Guest-preCPU.Guest) / total * 100
-END:
-	preCPU = nowCPU
-	return
+	return nil
 }

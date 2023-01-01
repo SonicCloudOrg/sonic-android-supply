@@ -23,11 +23,15 @@ import (
 
 var perfmonRootCMD *cobra.Command
 
-var interval int
-var format bool
-var serial string
+var (
+	interval int
+	isJson   bool
+	isFormat bool
+	serial   string
+)
 
 func InitPerfmon(perfmonCMD *cobra.Command) {
 	perfmonRootCMD = perfmonCMD
 	initProcessPerfmon()
+	initSystemPerfmon()
 }

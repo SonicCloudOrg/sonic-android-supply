@@ -41,10 +41,13 @@ var processPerfmonCmd = &cobra.Command{
 		var err error
 		device := util.GetDevice(serial)
 		if pid == "" {
-			// todo 优化
-			pid, err = perfmonUtil.GetPidOnAppName(device, appName)
+			pid, err = perfmonUtil.GetPidOnPackageName(device, appName)
 			if err != nil {
 				log.Panic(err)
+			}
+			if pid == "" {
+				log.Println("not find app corresponding pid")
+				return
 			}
 		}
 		sig := make(chan os.Signal, 1)
@@ -58,13 +61,13 @@ var processPerfmonCmd = &cobra.Command{
 				fmt.Println()
 			case <-timer:
 				if processInfo, err := perfmonUtil.GetProcessInfo(device, pid, 1); err != nil {
-					log.Fatal(err)
+					log.Panic(err)
 				} else {
-					if format {
-						fmt.Println(processInfo.ToJson())
-					} else {
-						fmt.Println(processInfo.ToString())
+					if appName != "" {
+						processInfo.Name = appName
 					}
+					data := util.ResultData(processInfo)
+					fmt.Println(util.Format(data, isFormat, isJson))
 				}
 			}
 		}
@@ -81,5 +84,6 @@ func initProcessPerfmon() {
 	processPerfmonCmd.Flags().StringVarP(&pid, "pid", "p", "", "process id")
 	processPerfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
 	processPerfmonCmd.Flags().IntVarP(&interval, "interval", "i", 1, "data refresh time")
-	processPerfmonCmd.Flags().BoolVarP(&format, "format", "f", false, "formatted output")
+	processPerfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
+	processPerfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
 }
