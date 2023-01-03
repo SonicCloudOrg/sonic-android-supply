@@ -41,7 +41,7 @@ func getAllStats(client *adb.Device, stats *entity.SystemStats) {
 	getInterfaces(client, stats)
 	getInterfaceInfo(client, stats)
 	getCPU(client, stats)
-	stats.TimeStamp = time.Now().UnixNano()
+	stats.TimeStamp = time.Now().Unix()
 }
 
 func getHostname(client *adb.Device, stats *entity.SystemStats) (err error) {

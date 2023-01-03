@@ -389,7 +389,7 @@ func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entity.Pro
 
 	//processInfo.Rchar = ioData.Rchar
 	//processInfo.Wchar = ioData.Wchar
-	processInfo.TimeStamp = time.Now().UnixNano()
+	processInfo.TimeStamp = time.Now().Unix()
 	return &processInfo, nil
 }
 
