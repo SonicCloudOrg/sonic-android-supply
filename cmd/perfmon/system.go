@@ -24,7 +24,6 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -36,7 +35,7 @@ var systemPerfmonCmd = &cobra.Command{
 		device := util.GetDevice(serial)
 		perfmonUtil.GetSystemStats(device)
 		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+		signal.Notify(sig, os.Interrupt, os.Kill)
 
 		timer := time.Tick(time.Duration(interval * int(time.Second)))
 		done := false

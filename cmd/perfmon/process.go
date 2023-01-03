@@ -25,7 +25,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -49,7 +48,7 @@ var processPerfmonCmd = &cobra.Command{
 			}
 		}
 		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+		signal.Notify(sig, os.Interrupt, os.Kill)
 		timer := time.Tick(time.Duration(interval * int(time.Second)))
 		done := false
 		for !done {
