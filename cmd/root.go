@@ -34,7 +34,7 @@ var rootCmd = &cobra.Command{
  █▄▄▄▄▄█▀   ██▄▄██   ██   ███   ▄▄██▄▄    ██▄▄▄▄█
   ▀▀▀▀▀      ▀▀▀▀    ▀▀   ▀▀▀   ▀▀▀▀▀▀      ▀▀▀▀
 
-             Author: SonicCloudOrg
+     Copyright (C) 2022 SonicCloudOrg AGPLv3
 https://github.com/SonicCloudOrg/sonic-android-supply
 `,
 }

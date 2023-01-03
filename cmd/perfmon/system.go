@@ -30,10 +30,9 @@ import (
 
 var systemPerfmonCmd = &cobra.Command{
 	Use:   "system",
-	Short: "get system performance data",
-	Long:  "get system performance data",
+	Short: "Get system performance data",
+	Long:  "Get system performance data",
 	Run: func(cmd *cobra.Command, args []string) {
-		// todo
 		device := util.GetDevice(serial)
 		perfmonUtil.GetSystemStats(device)
 		sig := make(chan os.Signal, 1)

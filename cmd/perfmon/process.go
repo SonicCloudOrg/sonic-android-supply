@@ -31,23 +31,21 @@ import (
 
 var processPerfmonCmd = &cobra.Command{
 	Use:   "process",
-	Short: "get app or pid performance",
-	Long:  "get app or pid performance",
-	Run: func(cmd *cobra.Command, args []string) {
+	Short: "Get app or pid performance",
+	Long:  "Get app or pid performance",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if pid == "" && appName == "" {
-			log.Println("pid or app-name is null")
-			return
+			return fmt.Errorf("pid or app-name is require")
 		}
 		var err error
 		device := util.GetDevice(serial)
 		if pid == "" {
 			pid, err = perfmonUtil.GetPidOnPackageName(device, appName)
 			if err != nil {
-				log.Panic(err)
+				return err
 			}
 			if pid == "" {
-				log.Println("not find app corresponding pid")
-				return
+				return fmt.Errorf("not find app corresponding pid")
 			}
 		}
 		sig := make(chan os.Signal, 1)
@@ -71,7 +69,7 @@ var processPerfmonCmd = &cobra.Command{
 				}
 			}
 		}
-		return
+		return nil
 	},
 }
 
