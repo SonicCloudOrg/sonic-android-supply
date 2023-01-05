@@ -25,6 +25,7 @@ import (
 	"github.com/goinggo/mapstructure"
 	"io/ioutil"
 	"log"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -393,19 +394,50 @@ func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entity.Pro
 	return &processInfo, nil
 }
 
-func getFPS(client *adb.Device) (err error) {
-	lines, err := client.OpenShell("dumpsys gfxinfo")
+func getProcessFPS(client *adb.Device, appName string) (result int, err error) {
+	lines, err := client.OpenShell(
+		fmt.Sprintf("dumpsys gfxinfo %s | grep '%s.*visibility=0' -A129 | grep Draw -A128 | grep 'View hierarchy:' -B129", appName, appName))
 	if err != nil {
 		return
 	}
 
 	scanner := bufio.NewScanner(lines)
+	frameCount := 0
+	vsyncCount := 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.Contains(line, "jank") {
-			fmt.Println("-============-")
+		if strings.Contains(line, "Draw") {
+			continue
 		}
-		fmt.Println(line)
+		if strings.TrimSpace(line) == "" {
+			break
+		}
+		frameCount++
+		s := strings.Split(line, "\t")
+		if len(s) == 5 {
+			render := RenderTime{}
+			render.Draw, _ = strconv.ParseFloat(s[1], 64)
+			render.Prepare, _ = strconv.ParseFloat(s[2], 64)
+			render.Process, _ = strconv.ParseFloat(s[3], 64)
+			render.Execute, _ = strconv.ParseFloat(s[4], 64)
+			total := render.Draw + render.Prepare + render.Process + render.Execute
+
+			if total > 16.67 {
+				vsyncCount += (int)(math.Ceil(total/16.67) - 1)
+			}
+		}
 	}
-	return nil
+	if frameCount == 0 {
+		result = 0
+	} else {
+		result = frameCount * 60 / (frameCount + vsyncCount)
+	}
+	return
+}
+
+type RenderTime struct {
+	Draw    float64
+	Prepare float64
+	Process float64
+	Execute float64
 }

@@ -1,6 +1,7 @@
 package perfmonUtil
 
 import (
+	"fmt"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
 	"testing"
@@ -14,5 +15,6 @@ func setupDevice(serial string) {
 
 func TestGetFPS(t *testing.T) {
 	setupDevice("S4NBPJTWP7W4954T")
-	getFPS(device)
+	r, _ := getProcessFPS(device, "com.miui.notes")
+	fmt.Println(r)
 }
