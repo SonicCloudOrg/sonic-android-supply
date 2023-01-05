@@ -77,7 +77,7 @@ var pid string
 
 func initProcessPerfmon() {
 	perfmonRootCMD.AddCommand(processPerfmonCmd)
-	processPerfmonCmd.Flags().StringVarP(&appName, "app-name", "n", "", "applicationName")
+	processPerfmonCmd.Flags().StringVarP(&appName, "name", "n", "", "application name")
 	processPerfmonCmd.Flags().StringVarP(&pid, "pid", "p", "", "process id")
 	processPerfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
 	processPerfmonCmd.Flags().IntVarP(&interval, "interval", "i", 1, "data refresh time")

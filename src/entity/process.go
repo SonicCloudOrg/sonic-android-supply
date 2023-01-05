@@ -117,6 +117,7 @@ type ProcessInfo struct {
 	Threads   int   `json:"threadCount"`
 	Rchar     int   `json:"readCharCount"`
 	Wchar     int   `json:"writeCharCount"`
+	FPS       int   `json:"fps"`
 	TimeStamp int64 `json:"timeStamp"`
 }
 

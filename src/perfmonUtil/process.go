@@ -390,13 +390,16 @@ func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entity.Pro
 
 	//processInfo.Rchar = ioData.Rchar
 	//processInfo.Wchar = ioData.Wchar
+	r, _ := getProcessFPS(client, pid)
+	processInfo.FPS = r
+
 	processInfo.TimeStamp = time.Now().Unix()
 	return &processInfo, nil
 }
 
-func getProcessFPS(client *adb.Device, appName string) (result int, err error) {
+func getProcessFPS(client *adb.Device, pid string) (result int, err error) {
 	lines, err := client.OpenShell(
-		fmt.Sprintf("dumpsys gfxinfo %s | grep '%s.*visibility=0' -A129 | grep Draw -A128 | grep 'View hierarchy:' -B129", appName, appName))
+		fmt.Sprintf("dumpsys gfxinfo %s | grep '.*visibility=0' -A129 | grep Draw -A128 | grep 'View hierarchy:' -B129", pid))
 	if err != nil {
 		return
 	}
