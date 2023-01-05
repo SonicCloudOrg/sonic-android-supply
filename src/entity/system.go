@@ -72,7 +72,7 @@ type SystemStats struct {
 	SwapTotal   uint64
 	SwapFree    uint64
 	NetworkInfo map[string]*SystemNetworkInfo
-	CPU         *SystemCPUInfo // or []SystemCPUInfo to get all the cpu-core's stats?
+	CPU         map[string]*SystemCPUInfo // or []SystemCPUInfo to get all the cpu-core's stats?
 	TimeStamp   int64
 }
 
@@ -81,9 +81,6 @@ func (stats *SystemStats) ToString() string {
 	var result = fmt.Sprintf(
 		//%s%s%s%s up %s%s%s
 		`
-CPU:
-    %s%.2f%s%% user, %s%.2f%s%% sys, %s%.2f%s%% nice, %s%.2f%s%% idle, %s%.2f%s%% iowait, %s%.2f%s%% hardirq, %s%.2f%s%% softirq, %s%.2f%s%% guest
-
 Memory:
     free    = %s%s%s
     used    = %s%s%s
@@ -92,14 +89,6 @@ Memory:
     swap    = %s%s%s free of %s%s%s
 
 `,
-		escBrightWhite, stats.CPU.User, escReset,
-		escBrightWhite, stats.CPU.System, escReset,
-		escBrightWhite, stats.CPU.Nice, escReset,
-		escBrightWhite, stats.CPU.Idle, escReset,
-		escBrightWhite, stats.CPU.Iowait, escReset,
-		escBrightWhite, stats.CPU.Irq, escReset,
-		escBrightWhite, stats.CPU.SoftIrq, escReset,
-		escBrightWhite, stats.CPU.Guest, escReset,
 		escBrightWhite, fmtBytes(stats.MemFree), escReset,
 		escBrightWhite, fmtBytes(used), escReset,
 		escBrightWhite, fmtBytes(stats.MemBuffers), escReset,
@@ -107,6 +96,23 @@ Memory:
 		escBrightWhite, fmtBytes(stats.SwapFree), escReset,
 		escBrightWhite, fmtBytes(stats.SwapTotal), escReset,
 	)
+
+	if len(stats.CPU) > 0 {
+		result += "CPU:\n"
+		for k, v := range stats.CPU {
+			result += fmt.Sprintf("%s :%s%.2f%s%% user, %s%.2f%s%% sys, %s%.2f%s%% nice, %s%.2f%s%% idle, %s%.2f%s%% iowait, %s%.2f%s%% hardirq, %s%.2f%s%% softirq, %s%.2f%s%% guest\n",
+				k,
+				escBrightWhite, v.User, escReset,
+				escBrightWhite, v.System, escReset,
+				escBrightWhite, v.Nice, escReset,
+				escBrightWhite, v.Idle, escReset,
+				escBrightWhite, v.Iowait, escReset,
+				escBrightWhite, v.Irq, escReset,
+				escBrightWhite, v.SoftIrq, escReset,
+				escBrightWhite, v.Guest, escReset,
+			)
+		}
+	}
 
 	if len(stats.NetworkInfo) > 0 {
 		result += "Network Interfaces:\n"
