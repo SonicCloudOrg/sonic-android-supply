@@ -390,14 +390,16 @@ func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entity.Pro
 
 	//processInfo.Rchar = ioData.Rchar
 	//processInfo.Wchar = ioData.Wchar
-	r, _ := getProcessFPS(client, pid)
+	r, _ := getProcessFPSByGFXInfo(client, pid)
 	processInfo.FPS = r
+
+	getProcessFPSBySurfaceFlinger(client, pid)
 
 	processInfo.TimeStamp = time.Now().Unix()
 	return &processInfo, nil
 }
 
-func getProcessFPS(client *adb.Device, pid string) (result int, err error) {
+func getProcessFPSByGFXInfo(client *adb.Device, pid string) (result int, err error) {
 	lines, err := client.OpenShell(
 		fmt.Sprintf("dumpsys gfxinfo %s | grep '.*visibility=0' -A129 | grep Draw -A128 | grep 'View hierarchy:' -B129", pid))
 	if err != nil {
@@ -443,4 +445,82 @@ type RenderTime struct {
 	Prepare float64
 	Process float64
 	Execute float64
+}
+
+func getProcessFPSBySurfaceFlinger(client *adb.Device, pid string) (result int, err error) {
+	result = 0
+	lines, err := client.OpenShell(
+		fmt.Sprintf("dumpsys SurfaceFlinger | grep %s", pid))
+	if err != nil {
+		return
+	}
+
+	activity := ""
+
+	scanner := bufio.NewScanner(lines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, fmt.Sprintf("producer=[%s:", pid)) {
+			reg := regexp.MustCompile("mConsumerName=.*#0")
+
+			activity = reg.FindString(line)
+
+			if activity == "" {
+				continue
+			}
+			break
+		}
+	}
+	if activity == "" {
+		return
+	}
+	var r = strings.NewReplacer("mConsumerName=", "", "SurfaceView - ", "")
+	activity = r.Replace(activity)
+	lines, err = client.OpenShell(
+		fmt.Sprintf("dumpsys SurfaceFlinger --latency '%s'", activity))
+	if err != nil {
+		return
+	}
+	scanner = bufio.NewScanner(lines)
+	var preFrame float64
+	var t []float64
+	for scanner.Scan() {
+		line := scanner.Text()
+		l := strings.Split(line, "\t")
+		if len(l) < 3 {
+			continue
+		}
+		if l[0][0] == '0' {
+			continue
+		}
+		frame, _ := strconv.ParseFloat(l[1], 64)
+		if frame == math.MaxInt64 {
+			continue
+		}
+		frame /= 1e6
+		if frame <= preFrame {
+			continue
+		}
+		if preFrame == 0 {
+			preFrame = frame
+			continue
+		}
+		t = append(t, frame-preFrame)
+		preFrame = frame
+	}
+
+	le := len(t)
+	if le == 0 {
+		return
+	}
+	result = (int)(float64(le) * 1000 / (sum(t, le)))
+	fmt.Println(fmt.Sprintf("test: %d", result))
+	return
+}
+
+func sum(arr []float64, n int) float64 {
+	if n <= 0 {
+		return 0
+	}
+	return sum(arr, n-1) + arr[n-1]
 }
