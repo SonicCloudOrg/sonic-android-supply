@@ -227,7 +227,8 @@ func parseCPUFields(fields []string, stat *entity.SystemCpuRaw) {
 }
 
 // the CPU stats that were fetched last time round
-var preCPU map[string]entity.SystemCpuRaw
+var preCPU entity.SystemCpuRaw
+var preCPUMap map[string]entity.SystemCpuRaw
 
 func getCPU(client *adb.Device, stats *entity.SystemStats) (err error) {
 	lines, err := client.OpenShell("/bin/cat /proc/stat")
@@ -240,8 +241,8 @@ func getCPU(client *adb.Device, stats *entity.SystemStats) (err error) {
 		total  float32
 	)
 
-	if preCPU == nil {
-		preCPU = make(map[string]entity.SystemCpuRaw)
+	if preCPUMap == nil {
+		preCPUMap = make(map[string]entity.SystemCpuRaw)
 	}
 
 	scanner := bufio.NewScanner(lines)
@@ -250,24 +251,25 @@ func getCPU(client *adb.Device, stats *entity.SystemStats) (err error) {
 		fields := strings.Fields(line)
 		if len(fields) > 0 && strings.HasPrefix(fields[0], "cpu") { // changing here if you want to get every cpu-core's stats
 			parseCPUFields(fields, &nowCPU)
-			if preCPU[fields[0]].Total == 0 { // having no pre raw cpu data
-				preCPU[fields[0]] = nowCPU
+			preCPU = preCPUMap[fields[0]]
+			if preCPU.Total == 0 { // having no pre raw cpu data
+				preCPUMap[fields[0]] = nowCPU
 				continue
 			}
 
-			total = float32(nowCPU.Total - preCPU[fields[0]].Total)
+			total = float32(nowCPU.Total - preCPU.Total)
 			if stats.CPU == nil {
 				stats.CPU = make(map[string]*entity.SystemCPUInfo)
 			}
 			cpu := &entity.SystemCPUInfo{}
-			cpu.User = float32(nowCPU.User-preCPU[fields[0]].User) / total * 100
-			cpu.Nice = float32(nowCPU.Nice-preCPU[fields[0]].Nice) / total * 100
-			cpu.System = float32(nowCPU.System-preCPU[fields[0]].System) / total * 100
-			cpu.Idle = float32(nowCPU.Idle-preCPU[fields[0]].Idle) / total * 100
-			cpu.Iowait = float32(nowCPU.Iowait-preCPU[fields[0]].Iowait) / total * 100
-			cpu.Irq = float32(nowCPU.Irq-preCPU[fields[0]].Irq) / total * 100
-			cpu.SoftIrq = float32(nowCPU.SoftIrq-preCPU[fields[0]].SoftIrq) / total * 100
-			cpu.Guest = float32(nowCPU.Guest-preCPU[fields[0]].Guest) / total * 100
+			cpu.User = float32(nowCPU.User-preCPU.User) / total * 100
+			cpu.Nice = float32(nowCPU.Nice-preCPU.Nice) / total * 100
+			cpu.System = float32(nowCPU.System-preCPU.System) / total * 100
+			cpu.Idle = float32(nowCPU.Idle-preCPU.Idle) / total * 100
+			cpu.Iowait = float32(nowCPU.Iowait-preCPU.Iowait) / total * 100
+			cpu.Irq = float32(nowCPU.Irq-preCPU.Irq) / total * 100
+			cpu.SoftIrq = float32(nowCPU.SoftIrq-preCPU.SoftIrq) / total * 100
+			cpu.Guest = float32(nowCPU.Guest-preCPU.Guest) / total * 100
 			stats.CPU[fields[0]] = cpu
 		}
 	}
