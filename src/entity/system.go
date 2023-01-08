@@ -31,10 +31,10 @@ type SystemFSInfo struct {
 }
 
 type SystemNetworkInfo struct {
-	IPv4 string
-	IPv6 string
-	Rx   uint64
-	Tx   uint64
+	IPv4 string `json:"ipv4"`
+	IPv6 string `json:"ipv6"`
+	Rx   uint64 `json:"rx"`
+	Tx   uint64 `json:"tx"`
 }
 
 type SystemCpuRaw struct {
@@ -51,29 +51,29 @@ type SystemCpuRaw struct {
 }
 
 type SystemCPUInfo struct {
-	User    float32
-	Nice    float32
-	System  float32
-	Idle    float32
-	Iowait  float32
-	Irq     float32
-	SoftIrq float32
-	Steal   float32
-	Guest   float32
+	User    float32 `json:"user"`
+	Nice    float32 `json:"nice"`
+	System  float32 `json:"system"`
+	Idle    float32 `json:"idle"`
+	Iowait  float32 `json:"iowait"`
+	Irq     float32 `json:"irq"`
+	SoftIrq float32 `json:"softIrq"`
+	Steal   float32 `json:"steal"`
+	Guest   float32 `json:"guest"`
 }
 
 type SystemStats struct {
-	Uptime      time.Duration
-	Hostname    string
-	MemTotal    uint64
-	MemFree     uint64
-	MemBuffers  uint64
-	MemCached   uint64
-	SwapTotal   uint64
-	SwapFree    uint64
-	NetworkInfo map[string]*SystemNetworkInfo
-	CPU         map[string]*SystemCPUInfo // or []SystemCPUInfo to get all the cpu-core's stats?
-	TimeStamp   int64
+	Uptime      time.Duration                 `json:"uptime"`
+	Hostname    string                        `json:"hostname"`
+	MemTotal    uint64                        `json:"memTotal"`
+	MemFree     uint64                        `json:"memFree"`
+	MemBuffers  uint64                        `json:"memBuffers"`
+	MemCached   uint64                        `json:"memCached"`
+	SwapTotal   uint64                        `json:"swapTotal"`
+	SwapFree    uint64                        `json:"swapFree"`
+	NetworkInfo map[string]*SystemNetworkInfo `json:"networkInfo"`
+	CPU         map[string]*SystemCPUInfo     `json:"cpu"`
+	TimeStamp   int64                         `json:"timeStamp"`
 }
 
 func (stats *SystemStats) ToString() string {

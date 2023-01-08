@@ -27,9 +27,9 @@ type ProcessIO struct {
 	Wchar               int `json:"wchar"`
 	Syscr               int `json:"syscr"`
 	Syscw               int `json:"syscw"`
-	ReadBytes           int `json:"read_bytes"`
-	WriteBytes          int `json:"write_bytes"`
-	CancelledWriteBytes int `json:"cancelled_write_bytes"`
+	ReadBytes           int `json:"readBytes"`
+	WriteBytes          int `json:"writeBytes"`
+	CancelledWriteBytes int `json:"cancelledWriteBytes"`
 }
 
 type ProcessStat struct {
@@ -61,49 +61,49 @@ type ProcessStat struct {
 }
 
 type ProcessStatus struct {
-	Name                     string `json:"Name"`
-	Umask                    string `json:"Umask"`
-	State                    string `json:"State"`
-	Tgid                     string `json:"Tgid"`
-	Ngid                     string `json:"Ngid"`
-	Pid                      string `json:"Pid"`
-	PPid                     string `json:"PPid"`
-	TracerPid                string `json:"TracerPid"`
-	Uid                      string `json:"Uid"`
-	Gid                      string `json:"Gid"`
-	FDSize                   string `json:"FDSize"`
-	Groups                   string `json:"Groups"`
-	VmPeak                   string `json:"VmPeak"`
-	VmSize                   string `json:"VmSize"`
-	VmLck                    string `json:"VmLck"`
-	VmPin                    string `json:"VmPin"`
-	VmHWM                    string `json:"VmHWM"`
-	VmRSS                    string `json:"VmRSS"`
-	RssAnon                  string `json:"RssAnon"`
-	RssFile                  string `json:"RssFile"`
-	RssShmem                 string `json:"RssShmem"`
-	VmData                   string `json:"VmData"`
-	VmStk                    string `json:"VmStk"`
-	VmExe                    string `json:"VmExe"`
-	VmLib                    string `json:"VmLib"`
-	VmPTE                    string `json:"VmPTE"`
-	VmSwap                   string `json:"VmSwap"`
-	Threads                  string `json:"Threads"`
-	SigQ                     string `json:"SigQ"`
-	SigPnd                   string `json:"SigPnd"`
-	ShdPnd                   string `json:"ShdPnd"`
-	SigBlk                   string `json:"SigBlk"`
-	SigIgn                   string `json:"SigIgn"`
-	SigCgt                   string `json:"SigCgt"`
-	CapInh                   string `json:"CapInh"`
-	CapPrm                   string `json:"CapPrm"`
-	CapEff                   string `json:"CapEff"`
-	CapBnd                   string `json:"CapBnd"`
-	CapAmb                   string `json:"CapAmb"`
-	CpusAllowed              string `json:"Cpus_allowed"`
-	CpusAllowedList          string `json:"Cpus_allowed_list"`
-	VoluntaryCtxtSwitches    string `json:"voluntary_ctxt_switches"`
-	NonVoluntaryCtxtSwitches string `json:"nonvoluntary_ctxt_switches"`
+	Name                     string `json:"name"`
+	Umask                    string `json:"umask"`
+	State                    string `json:"state"`
+	Tgid                     string `json:"tgid"`
+	Ngid                     string `json:"ngid"`
+	Pid                      string `json:"pid"`
+	PPid                     string `json:"pPid"`
+	TracerPid                string `json:"tracerPid"`
+	Uid                      string `json:"uid"`
+	Gid                      string `json:"gid"`
+	FDSize                   string `json:"fdSize"`
+	Groups                   string `json:"groups"`
+	VmPeak                   string `json:"vmPeak"`
+	VmSize                   string `json:"vmSize"`
+	VmLck                    string `json:"vmLck"`
+	VmPin                    string `json:"vmPin"`
+	VmHWM                    string `json:"vmHWM"`
+	VmRSS                    string `json:"vmRSS"`
+	RssAnon                  string `json:"rssAnon"`
+	RssFile                  string `json:"rssFile"`
+	RssShmem                 string `json:"rssShmem"`
+	VmData                   string `json:"vmData"`
+	VmStk                    string `json:"vmStk"`
+	VmExe                    string `json:"vmExe"`
+	VmLib                    string `json:"vmLib"`
+	VmPTE                    string `json:"vmPTE"`
+	VmSwap                   string `json:"vmSwap"`
+	Threads                  string `json:"threads"`
+	SigQ                     string `json:"sigQ"`
+	SigPnd                   string `json:"sigPnd"`
+	ShdPnd                   string `json:"shdPnd"`
+	SigBlk                   string `json:"sigBlk"`
+	SigIgn                   string `json:"sigIgn"`
+	SigCgt                   string `json:"sigCgt"`
+	CapInh                   string `json:"capInh"`
+	CapPrm                   string `json:"capPrm"`
+	CapEff                   string `json:"capEff"`
+	CapBnd                   string `json:"capBnd"`
+	CapAmb                   string `json:"capAmb"`
+	CpusAllowed              string `json:"cpusAllowed"`
+	CpusAllowedList          string `json:"cpusAllowedList"`
+	VoluntaryCtxtSwitches    string `json:"voluntaryCtxtSwitches"`
+	NonVoluntaryCtxtSwitches string `json:"nonVoluntaryCtxtSwitches"`
 }
 
 type ProcessInfo struct {
