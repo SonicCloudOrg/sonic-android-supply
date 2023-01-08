@@ -357,7 +357,7 @@ var sleepTime = 1.0 // # seconds
 var HZ = 100.0      //# ticks/second
 var cpuUtilization = 0.0
 
-func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entity.ProcessInfo, error) {
+func GetProcessInfo(client *adb.Device, pid string, name string, interval int64) (*entity.ProcessInfo, error) {
 	sleepTime = float64(interval)
 
 	stat, err := getStatOnPid(client, pid)
@@ -390,10 +390,14 @@ func GetProcessInfo(client *adb.Device, pid string, interval int64) (*entity.Pro
 
 	//processInfo.Rchar = ioData.Rchar
 	//processInfo.Wchar = ioData.Wchar
+	fps := make(map[string]int)
 	r, _ := getProcessFPSByGFXInfo(client, pid)
-	processInfo.FPS = r
+	fps["gfxinfo"] = r
 
-	getProcessFPSBySurfaceFlinger(client, pid)
+	r, _ = getProcessFPSBySurfaceFlinger(client, name)
+	fps["surface"] = r
+
+	processInfo.FPS = fps
 
 	processInfo.TimeStamp = time.Now().Unix()
 	return &processInfo, nil

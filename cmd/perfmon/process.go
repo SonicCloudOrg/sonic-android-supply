@@ -30,22 +30,16 @@ import (
 
 var processPerfmonCmd = &cobra.Command{
 	Use:   "process",
-	Short: "Get app or pid performance",
-	Long:  "Get app or pid performance",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if pid == "" && appName == "" {
-			return fmt.Errorf("pid or app-name is require")
-		}
-		var err error
+	Short: "Get app performance",
+	Long:  "Get app performance",
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		device := util.GetDevice(serial)
+		pid, err := perfmonUtil.GetPidOnPackageName(device, appName)
+		if err != nil {
+			return err
+		}
 		if pid == "" {
-			pid, err = perfmonUtil.GetPidOnPackageName(device, appName)
-			if err != nil {
-				return err
-			}
-			if pid == "" {
-				return fmt.Errorf("not find app corresponding pid")
-			}
+			return fmt.Errorf("not find app corresponding pid")
 		}
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, os.Interrupt, os.Kill)
@@ -57,12 +51,10 @@ var processPerfmonCmd = &cobra.Command{
 				done = true
 				fmt.Println()
 			case <-timer:
-				if processInfo, err := perfmonUtil.GetProcessInfo(device, pid, 1); err != nil {
+				if processInfo, err := perfmonUtil.GetProcessInfo(device, pid, appName, 1); err != nil {
 					log.Panic(err)
 				} else {
-					if appName != "" {
-						processInfo.Name = appName
-					}
+					processInfo.Name = appName
 					data := util.ResultData(processInfo)
 					fmt.Println(util.Format(data, isFormat, isJson))
 				}
@@ -73,12 +65,11 @@ var processPerfmonCmd = &cobra.Command{
 }
 
 var appName string
-var pid string
 
 func initProcessPerfmon() {
 	perfmonRootCMD.AddCommand(processPerfmonCmd)
 	processPerfmonCmd.Flags().StringVarP(&appName, "name", "n", "", "application name")
-	processPerfmonCmd.Flags().StringVarP(&pid, "pid", "p", "", "process id")
+	processPerfmonCmd.MarkFlagRequired("name")
 	processPerfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
 	processPerfmonCmd.Flags().IntVarP(&interval, "interval", "i", 1, "data refresh time")
 	processPerfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")

@@ -112,13 +112,13 @@ type ProcessInfo struct {
 	CpuUtilization float64 `json:"cpuUtilization"`
 	//ReadBytes      int     `json:"readBytes"`
 	//WriteBytes     int     `json:"writeBytes"`
-	PhyRSS    int   `json:"phyRSS"`
-	VmSize    int   `json:"vmRSS"`
-	Threads   int   `json:"threadCount"`
-	Rchar     int   `json:"readCharCount"`
-	Wchar     int   `json:"writeCharCount"`
-	FPS       int   `json:"fps"`
-	TimeStamp int64 `json:"timeStamp"`
+	PhyRSS    int            `json:"phyRSS"`
+	VmSize    int            `json:"vmRSS"`
+	Threads   int            `json:"threadCount"`
+	Rchar     int            `json:"readCharCount"`
+	Wchar     int            `json:"writeCharCount"`
+	FPS       map[string]int `json:"fps"`
+	TimeStamp int64          `json:"timeStamp"`
 }
 
 func (i *ProcessInfo) ToJson() string {
