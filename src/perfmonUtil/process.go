@@ -447,10 +447,10 @@ type RenderTime struct {
 	Execute float64
 }
 
-func getProcessFPSBySurfaceFlinger(client *adb.Device, pid string) (result int, err error) {
+func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, err error) {
 	result = 0
 	lines, err := client.OpenShell(
-		fmt.Sprintf("dumpsys SurfaceFlinger | grep %s", pid))
+		fmt.Sprintf("dumpsys SurfaceFlinger | grep %s", pkg))
 	if err != nil {
 		return
 	}
@@ -460,21 +460,19 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pid string) (result int, 
 	scanner := bufio.NewScanner(lines)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.Contains(line, fmt.Sprintf("producer=[%s:", pid)) {
-			reg := regexp.MustCompile("mConsumerName=.*#0")
+		reg := regexp.MustCompile("\\[.*#0")
 
-			activity = reg.FindString(line)
+		activity = reg.FindString(line)
 
-			if activity == "" {
-				continue
-			}
-			break
+		if activity == "" {
+			continue
 		}
+		break
 	}
 	if activity == "" {
 		return
 	}
-	var r = strings.NewReplacer("mConsumerName=", "", "SurfaceView - ", "")
+	var r = strings.NewReplacer("[", "", "SurfaceView - ", "")
 	activity = r.Replace(activity)
 	lines, err = client.OpenShell(
 		fmt.Sprintf("dumpsys SurfaceFlinger --latency '%s'", activity))
@@ -514,7 +512,6 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pid string) (result int, 
 		return
 	}
 	result = (int)(float64(le) * 1000 / (sum(t, le)))
-	fmt.Println(fmt.Sprintf("test: %d", result))
 	return
 }
 
