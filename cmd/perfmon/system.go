@@ -37,7 +37,7 @@ var systemPerfmonCmd = &cobra.Command{
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, os.Interrupt, os.Kill)
 
-		timer := time.Tick(time.Duration(interval * int(time.Second)))
+		timer := time.Tick(time.Duration(interval * int(time.Millisecond)))
 		done := false
 		for !done {
 			select {
@@ -56,7 +56,7 @@ var systemPerfmonCmd = &cobra.Command{
 func initSystemPerfmon() {
 	perfmonRootCMD.AddCommand(systemPerfmonCmd)
 	systemPerfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
-	systemPerfmonCmd.Flags().IntVarP(&interval, "interval", "i", 1, "data refresh time")
+	systemPerfmonCmd.Flags().IntVarP(&interval, "interval", "i", 1000, "data refresh time")
 	systemPerfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
 	systemPerfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
 }

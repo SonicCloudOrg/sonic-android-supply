@@ -43,7 +43,7 @@ var processPerfmonCmd = &cobra.Command{
 		}
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, os.Interrupt, os.Kill)
-		timer := time.Tick(time.Duration(interval * int(time.Second)))
+		timer := time.Tick(time.Duration(interval * int(time.Millisecond)))
 		done := false
 		for !done {
 			select {
@@ -71,7 +71,7 @@ func initProcessPerfmon() {
 	processPerfmonCmd.Flags().StringVarP(&appName, "name", "n", "", "application name")
 	processPerfmonCmd.MarkFlagRequired("name")
 	processPerfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
-	processPerfmonCmd.Flags().IntVarP(&interval, "interval", "i", 1, "data refresh time")
+	processPerfmonCmd.Flags().IntVarP(&interval, "interval", "i", 1000, "data refresh time")
 	processPerfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
 	processPerfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
 }

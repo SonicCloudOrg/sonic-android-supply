@@ -112,6 +112,7 @@ Memory:
 				escBrightWhite, v.Guest, escReset,
 			)
 		}
+		result += "\n"
 	}
 
 	if len(stats.NetworkInfo) > 0 {
