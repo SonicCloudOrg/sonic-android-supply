@@ -20,9 +20,6 @@ package perfmonUtil
 import (
 	"bufio"
 	"fmt"
-	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
-	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
-	"github.com/goinggo/mapstructure"
 	"io/ioutil"
 	"log"
 	"math"
@@ -30,6 +27,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
+	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
+	"github.com/goinggo/mapstructure"
 )
 
 func getIoDataOnPid(client *adb.Device, pid string) (*entity.ProcessIO, error) {
@@ -453,6 +454,7 @@ type RenderTime struct {
 
 func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, err error) {
 	result = 0
+	_, err = client.OpenShell("dumpsys SurfaceFlinger --latency-clear")
 	lines, err := client.OpenShell(
 		fmt.Sprintf("dumpsys SurfaceFlinger | grep %s", pkg))
 	if err != nil {
@@ -476,8 +478,9 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, 
 	if activity == "" {
 		return
 	}
-	var r = strings.NewReplacer("[", "", "SurfaceView - ", "")
-	activity = r.Replace(activity)
+	//var r = strings.NewReplacer("[", "", "")
+	activity = strings.Replace(activity, "[", "", 1)
+
 	lines, err = client.OpenShell(
 		fmt.Sprintf("dumpsys SurfaceFlinger --latency '%s'", activity))
 	if err != nil {
