@@ -46,7 +46,7 @@ var perfmonCmd = &cobra.Command{
 		if !perfOptions.ProcMem && !perfOptions.ProcCPU &&
 			!perfOptions.ProcFPS && !perfOptions.SystemCPU &&
 			!perfOptions.SystemGPU && !perfOptions.SystemNetWorking &&
-			!perfOptions.SystemMem{
+			!perfOptions.SystemMem {
 			perfOptions.SystemCPU = true
 			perfOptions.SystemMem = true
 		}
@@ -59,11 +59,11 @@ var perfmonCmd = &cobra.Command{
 				done = true
 				fmt.Println()
 			case <-timer:
-				sysStatus,err1 := perfmonUtil.GetSystemStats(device,perfOptions)
+				sysStatus, err1 := perfmonUtil.GetSystemStats(device, perfOptions)
 				if err1 != nil {
 					log.Panic(err1)
 				}
-				processInfo, err2 := perfmonUtil.GetProcessInfo(device, pid, packageName,perfOptions, 1)
+				processInfo, err2 := perfmonUtil.GetProcessInfo(device, pid, packageName, perfOptions, 1)
 				if err2 != nil {
 					log.Panic(err2)
 				}
@@ -91,17 +91,17 @@ func init() {
 	rootCmd.AddCommand(perfmonCmd)
 	perfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
 	perfmonCmd.Flags().IntVarP(&pid, "pid", "d", -1, "get PID data")
-	perfmonCmd.Flags().StringVarP(&packageName, "", "p", "", "app package name")
+	perfmonCmd.Flags().StringVarP(&packageName, "package", "p", "", "app package name")
 	perfmonCmd.Flags().BoolVar(&perfOptions.SystemCPU, "sys-cpu", false, "get system cpu data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.SystemMem, "sys-mem", false, "get system memory data")
 	//perfmonCmd.Flags().BoolVar(&sysDisk, "sys-disk", false, "get system disk data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.SystemNetWorking, "sys-network", false, "get system networking data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.SystemGPU, "gpu", false, "get gpu data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcFPS, "proc-fps", false, "get fps data")
-	perfmonCmd.Flags().BoolVar(&perfOptions.ProcThreads,"proc-threads",false,"get process threads")
+	perfmonCmd.Flags().BoolVar(&perfOptions.ProcThreads, "proc-threads", false, "get process threads")
 	//perfmonCmd.Flags().BoolVar(&, "proc-network", false, "get process network data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcCPU, "proc-cpu", false, "get process cpu data")
-	perfmonCmd.Flags().BoolVar(&perfOptions.SystemMem, "proc-mem", false, "get process mem data")
+	perfmonCmd.Flags().BoolVar(&perfOptions.ProcMem, "proc-mem", false, "get process mem data")
 	perfmonCmd.Flags().IntVarP(&refreshTime, "refresh", "r", 1000, "data refresh time(millisecond)")
 	perfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
 	perfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
