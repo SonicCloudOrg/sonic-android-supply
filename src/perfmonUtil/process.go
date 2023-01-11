@@ -376,7 +376,7 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 		if processInfo == nil {
 			processInfo = &entity.ProcessInfo{}
 		}
-		var fps = 0
+		fps := 0
 
 		fps, err = getProcessFPSBySurfaceFlinger(client, packageName)
 
@@ -464,7 +464,7 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, 
 		break
 	}
 	if activity == "" {
-		return 0, errors.New(fmt.Sprintf("not find app %s activity", pkg))
+		return 0, errors.New(fmt.Sprintf("could not find app %s activity", pkg))
 	}
 	//var r = strings.NewReplacer("[", "", "")
 	activity = strings.Replace(activity, "[", "", 1)
