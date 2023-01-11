@@ -38,7 +38,7 @@ var perfmonCmd = &cobra.Command{
 		pid, err := perfmonUtil.GetPidOnPackageName(device, packageName)
 		if err != nil {
 			fmt.Println("no corresponding application PID found")
-			pid = ""
+			os.Exit(0)
 		}
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, os.Interrupt, os.Kill)
