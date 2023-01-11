@@ -19,6 +19,7 @@ package perfmonUtil
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -391,12 +392,13 @@ func GetProcessInfo(client *adb.Device, pid string, name string, interval int64)
 
 	//processInfo.Rchar = ioData.Rchar
 	//processInfo.Wchar = ioData.Wchar
-	fps := make(map[string]int)
-	r, _ := getProcessFPSByGFXInfo(client, pid)
-	fps["gfxinfo"] = r
+	var fps = 0
 
-	r, _ = getProcessFPSBySurfaceFlinger(client, name)
-	fps["surface"] = r
+	fps, err = getProcessFPSBySurfaceFlinger(client, name)
+
+	if fps <= 0 || err != nil {
+		fps, _ = getProcessFPSByGFXInfo(client, pid)
+	}
 
 	processInfo.FPS = fps
 
@@ -476,7 +478,7 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, 
 		break
 	}
 	if activity == "" {
-		return
+		return 0, errors.New(fmt.Sprintf("not find app %s activity", pkg))
 	}
 	//var r = strings.NewReplacer("[", "", "")
 	activity = strings.Replace(activity, "[", "", 1)
