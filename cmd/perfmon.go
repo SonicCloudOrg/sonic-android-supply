@@ -89,7 +89,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(perfmonCmd)
-	perfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial")
+	perfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial (default first device)")
 	perfmonCmd.Flags().IntVarP(&pid, "pid", "d", -1, "get PID data")
 	perfmonCmd.Flags().StringVarP(&packageName, "package", "p", "", "app package name")
 	perfmonCmd.Flags().BoolVar(&perfOptions.SystemCPU, "sys-cpu", false, "get system cpu data")
@@ -102,7 +102,7 @@ func init() {
 	//perfmonCmd.Flags().BoolVar(&, "proc-network", false, "get process network data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcCPU, "proc-cpu", false, "get process cpu data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcMem, "proc-mem", false, "get process mem data")
-	perfmonCmd.Flags().IntVarP(&refreshTime, "refresh", "r", 1000, "data refresh time(millisecond)")
+	perfmonCmd.Flags().IntVarP(&refreshTime, "refresh", "r", 1000, "data refresh time (millisecond)")
 	perfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
 	perfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
 }
