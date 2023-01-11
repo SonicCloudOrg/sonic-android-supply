@@ -22,65 +22,42 @@ import (
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 	"io"
-	"io/ioutil"
 	"strconv"
 	"strings"
-	"time"
 )
 
-func GetSystemStats(client *adb.Device) *entity.SystemStats {
-	stats := &entity.SystemStats{}
-	getAllStats(client, stats)
-	return stats
-}
-
-func getAllStats(client *adb.Device, stats *entity.SystemStats) {
-	getUptime(client, stats)
-	getHostname(client, stats)
-	getMemInfo(client, stats)
-	getInterfaces(client, stats)
-	getInterfaceInfo(client, stats)
-	getCPU(client, stats)
-	stats.TimeStamp = time.Now().Unix()
-}
-
-func getHostname(client *adb.Device, stats *entity.SystemStats) (err error) {
-	lines, err := client.OpenShell("/bin/hostname -f")
-
-	if err != nil {
-		return
-	}
-	data, err := ioutil.ReadAll(lines)
-	if err != nil {
-		return
-	}
-	stats.Hostname = strings.TrimSpace(string(data))
-	return
-}
-
-func getUptime(client *adb.Device, stats *entity.SystemStats) (err error) {
-	lines, err := client.OpenShell("/bin/cat /proc/uptime")
-	if err != nil {
-		return
-	}
-	uptime, err := ioutil.ReadAll(lines)
-	if err != nil {
-		return
-	}
-	parts := strings.Fields(string(uptime))
-	if len(parts) == 2 {
-		var upsecs float64
-		upsecs, err = strconv.ParseFloat(parts[0], 64)
+func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (*entity.SystemInfo, error) {
+	stats := &entity.SystemInfo{}
+	var err error
+	if perfOptions.SystemCPU {
+		err = getCPU(client, stats)
 		if err != nil {
-			return
+			return nil, err
 		}
-		stats.Uptime = time.Duration(upsecs * 1e9)
 	}
 
-	return
+	if perfOptions.SystemMem {
+		stats.MemInfo = &entity.SystemMemInfo{}
+		err = getMemInfo(client, stats)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if perfOptions.SystemNetWorking {
+		err = getInterfaces(client, stats)
+		if err != nil {
+			return nil, err
+		}
+		err = getInterfaceInfo(client, stats)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return stats, nil
 }
 
-func getMemInfo(client *adb.Device, stats *entity.SystemStats) (err error) {
+func getMemInfo(client *adb.Device, stats *entity.SystemInfo) (err error) {
 	lines, err := client.OpenShell("/bin/cat /proc/meminfo")
 	if err != nil {
 		return
@@ -98,24 +75,25 @@ func getMemInfo(client *adb.Device, stats *entity.SystemStats) (err error) {
 			val *= 1024
 			switch parts[0] {
 			case "MemTotal:":
-				stats.MemTotal = val
+				stats.MemInfo.MemTotal = val
 			case "MemFree:":
-				stats.MemFree = val
+				stats.MemInfo.MemFree = val
 			case "Buffers:":
-				stats.MemBuffers = val
+				stats.MemInfo.MemBuffers = val
 			case "Cached:":
-				stats.MemCached = val
+				stats.MemInfo.MemCached = val
 			case "SwapTotal:":
-				stats.SwapTotal = val
+				stats.MemInfo.SwapTotal = val
 			case "SwapFree:":
-				stats.SwapFree = val
+				stats.MemInfo.SwapFree = val
 			}
 		}
 	}
+	stats.MemInfo.MemUsage = stats.MemInfo.MemTotal - stats.MemInfo.MemFree - stats.MemInfo.MemBuffers - stats.MemInfo.MemCached
 	return
 }
 
-func getInterfaces(client *adb.Device, stats *entity.SystemStats) (err error) {
+func getInterfaces(client *adb.Device, stats *entity.SystemInfo) (err error) {
 	var lines io.ReadCloser
 	lines, err = client.OpenShell("/bin/ip -o addr")
 	if err != nil {
@@ -159,7 +137,7 @@ func getInterfaces(client *adb.Device, stats *entity.SystemStats) (err error) {
 	return
 }
 
-func getInterfaceInfo(client *adb.Device, stats *entity.SystemStats) (err error) {
+func getInterfaceInfo(client *adb.Device, stats *entity.SystemInfo) (err error) {
 	lines, err := client.OpenShell("/bin/cat /proc/net/dev")
 	if err != nil {
 		return
@@ -230,7 +208,7 @@ func parseCPUFields(fields []string, stat *entity.SystemCpuRaw) {
 var preCPU entity.SystemCpuRaw
 var preCPUMap map[string]entity.SystemCpuRaw
 
-func getCPU(client *adb.Device, stats *entity.SystemStats) (err error) {
+func getCPU(client *adb.Device, stats *entity.SystemInfo) (err error) {
 	lines, err := client.OpenShell("/bin/cat /proc/stat")
 	if err != nil {
 		return

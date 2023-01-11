@@ -20,8 +20,6 @@ package entity
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
-	"time"
 )
 
 type SystemFSInfo struct {
@@ -62,96 +60,103 @@ type SystemCPUInfo struct {
 	Guest   float32 `json:"guest"`
 }
 
-type SystemStats struct {
-	Uptime      time.Duration                 `json:"uptime"`
-	Hostname    string                        `json:"hostname"`
-	MemTotal    uint64                        `json:"memTotal"`
-	MemFree     uint64                        `json:"memFree"`
-	MemBuffers  uint64                        `json:"memBuffers"`
-	MemCached   uint64                        `json:"memCached"`
-	SwapTotal   uint64                        `json:"swapTotal"`
-	SwapFree    uint64                        `json:"swapFree"`
-	NetworkInfo map[string]*SystemNetworkInfo `json:"networkInfo"`
-	CPU         map[string]*SystemCPUInfo     `json:"cpu"`
-	TimeStamp   int64                         `json:"timeStamp"`
+type SystemMemInfo struct {
+	MemTotal   uint64 `json:"memTotal,omitempty"`
+	MemFree    uint64 `json:"memFree,omitempty"`
+	MemBuffers uint64 `json:"memBuffers,omitempty"`
+	MemCached  uint64 `json:"memCached,omitempty"`
+	MemUsage   uint64 `json:"memUsage,omitempty"`
+	SwapTotal  uint64 `json:"swapTotal,omitempty"`
+	SwapFree   uint64 `json:"swapFree,omitempty"`
 }
 
-func (stats *SystemStats) ToString() string {
-	used := stats.MemTotal - stats.MemFree - stats.MemBuffers - stats.MemCached
-	var result = fmt.Sprintf(
-		//%s%s%s%s up %s%s%s
-		`
-Memory:
-    free    = %s%s%s
-    used    = %s%s%s
-    buffers = %s%s%s
-    cached  = %s%s%s
-    swap    = %s%s%s free of %s%s%s
-
-`,
-		escBrightWhite, fmtBytes(stats.MemFree), escReset,
-		escBrightWhite, fmtBytes(used), escReset,
-		escBrightWhite, fmtBytes(stats.MemBuffers), escReset,
-		escBrightWhite, fmtBytes(stats.MemCached), escReset,
-		escBrightWhite, fmtBytes(stats.SwapFree), escReset,
-		escBrightWhite, fmtBytes(stats.SwapTotal), escReset,
-	)
-
-	if len(stats.CPU) > 0 {
-		result += "CPU:\n"
-		for k, v := range stats.CPU {
-			result += fmt.Sprintf("%s :%s%.2f%s%% user, %s%.2f%s%% sys, %s%.2f%s%% nice, %s%.2f%s%% idle, %s%.2f%s%% iowait, %s%.2f%s%% hardirq, %s%.2f%s%% softirq, %s%.2f%s%% guest\n",
-				k,
-				escBrightWhite, v.User, escReset,
-				escBrightWhite, v.System, escReset,
-				escBrightWhite, v.Nice, escReset,
-				escBrightWhite, v.Idle, escReset,
-				escBrightWhite, v.Iowait, escReset,
-				escBrightWhite, v.Irq, escReset,
-				escBrightWhite, v.SoftIrq, escReset,
-				escBrightWhite, v.Guest, escReset,
-			)
-		}
-		result += "\n"
-	}
-
-	if len(stats.NetworkInfo) > 0 {
-		result += "Network Interfaces:\n"
-		keys := make([]string, 0, len(stats.NetworkInfo))
-		for intf := range stats.NetworkInfo {
-			keys = append(keys, intf)
-		}
-		sort.Strings(keys)
-		for _, intf := range keys {
-			info := stats.NetworkInfo[intf]
-			result += fmt.Sprintf("    %s%s%s - %s%s%s",
-				escBrightWhite, intf, escReset,
-				escBrightWhite, info.IPv4, escReset,
-			)
-			if len(info.IPv6) > 0 {
-				result += fmt.Sprintf(", %s%s%s\n",
-					escBrightWhite, info.IPv6, escReset,
-				)
-			} else {
-				result += "\n"
-			}
-			result += fmt.Sprintf("      rx = %s%s%s, tx = %s%s%s\n",
-				escBrightWhite, fmtBytes(info.Rx), escReset,
-				escBrightWhite, fmtBytes(info.Tx), escReset,
-			)
-			result += "\n"
-		}
-		result += "\n"
-	}
-	return result
+type SystemInfo struct {
+	MemInfo     *SystemMemInfo                `json:"memInfo,omitempty"`
+	NetworkInfo map[string]*SystemNetworkInfo `json:"networkInfo,omitempty"`
+	CPU         map[string]*SystemCPUInfo     `json:"cpu,omitempty"`
+	//TimeStamp   int64                         `json:"timeStamp"`
 }
 
-func (stats *SystemStats) ToFormat() string {
+func (stats *SystemInfo) ToString() string {
+	return stats.ToJson()
+}
+
+//func (stats *SystemInfo) ToString() string {
+//	used := *stats.MemTotal - *stats.MemFree - *stats.MemBuffers - *stats.MemCached
+//	var result = fmt.Sprintf(
+//		//%s%s%s%s up %s%s%s
+//		`
+//Memory:
+//    free    = %s%s%s
+//    used    = %s%s%s
+//    buffers = %s%s%s
+//    cached  = %s%s%s
+//    swap    = %s%s%s free of %s%s%s
+//
+//`,
+//		escBrightWhite, fmtBytes(stats.MemInfo.MemFree), escReset,
+//		escBrightWhite, fmtBytes(stats.MemInfo.MemUsage), escReset,
+//		escBrightWhite, fmtBytes(stats.MemInfo.MemBuffers), escReset,
+//		escBrightWhite, fmtBytes(stats.MemInfo.MemCached), escReset,
+//		escBrightWhite, fmtBytes(stats.MemInfo.SwapFree), escReset,
+//		escBrightWhite, fmtBytes(stats.MemInfo.SwapTotal), escReset,
+//	)
+//
+//	if len(stats.CPU) > 0 {
+//		result += "CPU:\n"
+//		for k, v := range stats.CPU {
+//			result += fmt.Sprintf("%s :%s%.2f%s%% user, %s%.2f%s%% sys, %s%.2f%s%% nice, %s%.2f%s%% idle, %s%.2f%s%% iowait, %s%.2f%s%% hardirq, %s%.2f%s%% softirq, %s%.2f%s%% guest\n",
+//				k,
+//				escBrightWhite, v.User, escReset,
+//				escBrightWhite, v.System, escReset,
+//				escBrightWhite, v.Nice, escReset,
+//				escBrightWhite, v.Idle, escReset,
+//				escBrightWhite, v.Iowait, escReset,
+//				escBrightWhite, v.Irq, escReset,
+//				escBrightWhite, v.SoftIrq, escReset,
+//				escBrightWhite, v.Guest, escReset,
+//			)
+//		}
+//		result += "\n"
+//	}
+//
+//	if len(stats.NetworkInfo) > 0 {
+//		result += "Network Interfaces:\n"
+//		keys := make([]string, 0, len(stats.NetworkInfo))
+//		for intf := range stats.NetworkInfo {
+//			keys = append(keys, intf)
+//		}
+//		sort.Strings(keys)
+//		for _, intf := range keys {
+//			info := stats.NetworkInfo[intf]
+//			result += fmt.Sprintf("    %s%s%s - %s%s%s",
+//				escBrightWhite, intf, escReset,
+//				escBrightWhite, info.IPv4, escReset,
+//			)
+//			if len(info.IPv6) > 0 {
+//				result += fmt.Sprintf(", %s%s%s\n",
+//					escBrightWhite, info.IPv6, escReset,
+//				)
+//			} else {
+//				result += "\n"
+//			}
+//			result += fmt.Sprintf("      rx = %s%s%s, tx = %s%s%s\n",
+//				escBrightWhite, fmtBytes(info.Rx), escReset,
+//				escBrightWhite, fmtBytes(info.Tx), escReset,
+//			)
+//			result += "\n"
+//		}
+//		result += "\n"
+//	}
+//	return result
+//}
+
+func (stats *SystemInfo) ToFormat() string {
 	str, _ := json.MarshalIndent(stats, "", "\t")
 	return string(str)
 }
 
-func (stats *SystemStats) ToJson() string {
+func (stats *SystemInfo) ToJson() string {
 	str, _ := json.Marshal(stats)
 	return string(str)
 }
@@ -173,4 +178,15 @@ func fmtBytes(val uint64) string {
 	} else {
 		return fmt.Sprintf("%6.2f GiB", float64(val)/1024.0/1024.0/1024.0)
 	}
+}
+
+type PerfOption struct {
+	SystemCPU        bool
+	SystemMem        bool
+	SystemGPU        bool
+	SystemNetWorking bool
+	ProcCPU          bool
+	ProcFPS          bool
+	ProcMem          bool
+	ProcThreads      bool
 }

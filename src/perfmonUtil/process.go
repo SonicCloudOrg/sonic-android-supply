@@ -31,34 +31,7 @@ import (
 
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
-	"github.com/goinggo/mapstructure"
 )
-
-func getIoDataOnPid(client *adb.Device, pid string) (*entity.ProcessIO, error) {
-	lines, err := client.OpenShell(fmt.Sprintf("/bin/cat /proc/%s/io", pid))
-	if err != nil {
-		return nil, fmt.Errorf("exec command erro : " + fmt.Sprintf("/bin/cat /proc/%s/io", pid))
-	}
-	data, err := ioutil.ReadAll(lines)
-	if err != nil {
-		log.Panic(err)
-	}
-	scanner := bufio.NewScanner(strings.NewReader(string(data)))
-	var ioMess = make(map[string]int)
-	for scanner.Scan() {
-		line := scanner.Text()
-		fields := strings.Fields(line)
-		value, err := strconv.Atoi(fields[1])
-		if err != nil {
-			return nil, err
-		}
-		ioMess[strings.TrimRight(fields[0], ":")] = value
-	}
-	var io = &entity.ProcessIO{}
-	err = mapstructure.Decode(ioMess, io)
-	//fmt.Println(lines)
-	return io, nil
-}
 
 func getStatOnPid(client *adb.Device, pid string) (stat *entity.ProcessStat, err error) {
 	lines, err := client.OpenShell(fmt.Sprintf("/bin/cat /proc/%s/stat", pid))
@@ -359,7 +332,7 @@ var sleepTime = 1.0 // # seconds
 var HZ = 100.0      //# ticks/second
 var cpuUtilization = 0.0
 
-func GetProcessInfo(client *adb.Device, pid string, name string, interval int64) (*entity.ProcessInfo, error) {
+func GetProcessInfo(client *adb.Device, pid string, packageName string,perfOptions entity.PerfOption, interval int64) (*entity.ProcessInfo, error) {
 	sleepTime = float64(interval)
 
 	stat, err := getStatOnPid(client, pid)
@@ -374,35 +347,41 @@ func GetProcessInfo(client *adb.Device, pid string, name string, interval int64)
 	//if err != nil {
 	//	return nil, err
 	//}
-
 	var processInfo entity.ProcessInfo
-	processInfo.PhyRSS = stat.Rss
-	processInfo.VmSize = stat.Vsize
-	if processInfo.Threads, err = strconv.Atoi(status.Threads); err != nil {
-		return nil, err
+
+	if perfOptions.ProcThreads{
+		var threads int
+		if threads, err = strconv.Atoi(status.Threads); err != nil {
+			return nil, err
+		}
+		processInfo.Threads = &threads
 	}
 
-	getCpuUsage(client, pid)
-	processInfo.CpuUtilization = cpuUtilization
+	if perfOptions.ProcMem {
+		processInfo.PhyRSS = &stat.Rss
+		processInfo.VmSize = &stat.Vsize
+	}
 
-	//processInfo.ReadBytes = ioData.ReadBytes
-	//processInfo.WriteBytes = ioData.WriteBytes
+	if perfOptions.ProcCPU {
+		getCpuUsage(client, pid)
+		processInfo.CpuUtilization = &cpuUtilization
+	}
+
+
+	if perfOptions.ProcFPS{
+		var fps = 0
+
+		fps, err = getProcessFPSBySurfaceFlinger(client, packageName)
+
+		if fps <= 0 || err != nil {
+			fps, _ = getProcessFPSByGFXInfo(client, pid)
+		}
+
+		processInfo.FPS = &fps
+	}
+
 	processInfo.Name = status.Name
 	processInfo.Pid = status.Pid
-
-	//processInfo.Rchar = ioData.Rchar
-	//processInfo.Wchar = ioData.Wchar
-	var fps = 0
-
-	fps, err = getProcessFPSBySurfaceFlinger(client, name)
-
-	if fps <= 0 || err != nil {
-		fps, _ = getProcessFPSByGFXInfo(client, pid)
-	}
-
-	processInfo.FPS = fps
-
-	processInfo.TimeStamp = time.Now().Unix()
 	return &processInfo, nil
 }
 

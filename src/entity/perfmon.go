@@ -15,23 +15,24 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package perfmon
+package entity
 
-import (
-	"github.com/spf13/cobra"
-)
+import "encoding/json"
 
-var perfmonRootCMD *cobra.Command
+type PerfmonData struct {
+	System    *SystemInfo  `json:"system,omitempty"`
+	Process   *ProcessInfo `json:"process,omitempty"`
+	TimeStamp int64        `json:"timeStamp"`
+}
 
-var (
-	interval int
-	isJson   bool
-	isFormat bool
-	serial   string
-)
-
-func InitPerfmon(perfmonCMD *cobra.Command) {
-	perfmonRootCMD = perfmonCMD
-	initProcessPerfmon()
-	initSystemPerfmon()
+func (p *PerfmonData) ToJson() string {
+	str, _ := json.Marshal(p)
+	return string(str)
+}
+func (p *PerfmonData) ToString() string {
+	return p.ToJson()
+}
+func (p *PerfmonData) ToFormat() string {
+	str, _ := json.MarshalIndent(p, "", "\t")
+	return string(str)
 }

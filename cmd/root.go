@@ -39,7 +39,11 @@ https://github.com/SonicCloudOrg/sonic-android-supply
 `,
 }
 
-var serial string
+var (
+	serial   string
+	isFormat bool
+	isJson   bool
+)
 
 // Execute error
 func Execute() {

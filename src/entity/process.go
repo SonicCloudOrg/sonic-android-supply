@@ -19,7 +19,6 @@ package entity
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type ProcessIO struct {
@@ -109,16 +108,11 @@ type ProcessStatus struct {
 type ProcessInfo struct {
 	Name           string  `json:"name"`
 	Pid            string  `json:"pid"`
-	CpuUtilization float64 `json:"cpuUtilization"`
-	//ReadBytes      int     `json:"readBytes"`
-	//WriteBytes     int     `json:"writeBytes"`
-	PhyRSS    int   `json:"phyRSS"`
-	VmSize    int   `json:"vmRSS"`
-	Threads   int   `json:"threadCount"`
-	Rchar     int   `json:"readCharCount"`
-	Wchar     int   `json:"writeCharCount"`
-	FPS       int   `json:"fps"`
-	TimeStamp int64 `json:"timeStamp"`
+	CpuUtilization *float64 `json:"cpuUtilization"`
+	PhyRSS         *int     `json:"phyRSS"`
+	VmSize         *int     `json:"vmRSS"`
+	Threads        *int     `json:"threadCount"`
+	FPS            *int     `json:"fps"`
 }
 
 func (i *ProcessInfo) ToJson() string {
@@ -131,35 +125,33 @@ func (i *ProcessInfo) ToFormat() string {
 	return string(str)
 }
 
-func (i *ProcessInfo) ToString() string {
-
-	var result = fmt.Sprintf(
-		//%s%s%s%s up %s%s%s
-		`
-PID:%s%s%s Name:%s%s%s
-
-CPU:
-    %s%.2f%s%% cpuUtilizetion
-    %s%d%s     ThreadCount
-
-Memory:
-    physicalMemory    = %s%d%s
-    virtualMemory     = %s%d%s
-
-R/W char:
-    Rchar = %s%d%s
-	Wchar = %s%d%s
-
-`,
-		escBrightWhite, i.Name, escReset,
-		escBrightWhite, i.Pid, escReset,
-		escBrightWhite, i.CpuUtilization, escReset,
-		escBrightWhite, i.Threads, escReset,
-		escBrightWhite, i.PhyRSS, escReset,
-		escBrightWhite, i.VmSize, escReset,
-		escBrightWhite, i.Rchar, escReset,
-		escBrightWhite, i.Wchar, escReset,
-	)
-	return result
-	//return fmt.Sprintf("name:%s pid:%s cpuUtilizetion:%f phyRss:%d vmRss:%d threadCount:%d readCharCount:%d writeCharCount:%d timeStamp:%d", i.Name, i.Pid, i.CpuUtilization, i.PhyRSS, i.VmSize, i.Threads, i.Rchar, i.Wchar, time.Now().Unix())
+func (i *ProcessInfo) ToString() string{
+	return i.ToJson()
 }
+
+//func (i *ProcessInfo) ToString() string {
+//
+//	var result = fmt.Sprintf(
+//		//%s%s%s%s up %s%s%s
+//		`
+//PID:%s%s%s Name:%s%s%s
+//
+//CPU:
+//    %s%.2f%s%% cpuUtilizetion
+//    %s%d%s     ThreadCount
+//
+//Memory:
+//    physicalMemory    = %s%d%s
+//    virtualMemory     = %s%d%s
+//
+//`,
+//		escBrightWhite, i.Name, escReset,
+//		escBrightWhite, i.Pid, escReset,
+//		escBrightWhite, i.CpuUtilization, escReset,
+//		escBrightWhite, i.Threads, escReset,
+//		escBrightWhite, i.PhyRSS, escReset,
+//		escBrightWhite, i.VmSize, escReset,
+//	)
+//	return result
+//	//return fmt.Sprintf("name:%s pid:%s cpuUtilizetion:%f phyRss:%d vmRss:%d threadCount:%d readCharCount:%d writeCharCount:%d timeStamp:%d", i.Name, i.Pid, i.CpuUtilization, i.PhyRSS, i.VmSize, i.Threads, i.Rchar, i.Wchar, time.Now().Unix())
+//}
