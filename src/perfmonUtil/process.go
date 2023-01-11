@@ -332,24 +332,23 @@ var sleepTime = 1.0 // # seconds
 var HZ = 100.0      //# ticks/second
 var cpuUtilization = 0.0
 
-func GetProcessInfo(client *adb.Device, pid string, packageName string,perfOptions entity.PerfOption, interval int64) (*entity.ProcessInfo, error) {
+func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOptions entity.PerfOption, interval int64) (processInfo *entity.ProcessInfo, err error) {
 	sleepTime = float64(interval)
-
-	stat, err := getStatOnPid(client, pid)
+	var stat *entity.ProcessStat
+	stat, err = getStatOnPid(client, pid)
 	if err != nil {
 		return nil, err
 	}
-	status, err := getStatusOnPid(client, pid)
+	var status *entity.ProcessStatus
+	status, err = getStatusOnPid(client, pid)
 	if err != nil {
 		return nil, err
 	}
-	//ioData, err := getIoDataOnPid(client, pid)
-	//if err != nil {
-	//	return nil, err
-	//}
-	var processInfo entity.ProcessInfo
 
-	if perfOptions.ProcThreads{
+	if perfOptions.ProcThreads {
+		if processInfo == nil {
+			processInfo = &entity.ProcessInfo{}
+		}
 		var threads int
 		if threads, err = strconv.Atoi(status.Threads); err != nil {
 			return nil, err
@@ -358,17 +357,25 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string,perfOptio
 	}
 
 	if perfOptions.ProcMem {
+		if processInfo == nil {
+			processInfo = &entity.ProcessInfo{}
+		}
 		processInfo.PhyRSS = &stat.Rss
 		processInfo.VmSize = &stat.Vsize
 	}
 
 	if perfOptions.ProcCPU {
+		if processInfo == nil {
+			processInfo = &entity.ProcessInfo{}
+		}
 		getCpuUsage(client, pid)
 		processInfo.CpuUtilization = &cpuUtilization
 	}
 
-
-	if perfOptions.ProcFPS{
+	if perfOptions.ProcFPS {
+		if processInfo == nil {
+			processInfo = &entity.ProcessInfo{}
+		}
 		var fps = 0
 
 		fps, err = getProcessFPSBySurfaceFlinger(client, packageName)
@@ -382,7 +389,7 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string,perfOptio
 
 	processInfo.Name = status.Name
 	processInfo.Pid = status.Pid
-	return &processInfo, nil
+	return
 }
 
 func getProcessFPSByGFXInfo(client *adb.Device, pid string) (result int, err error) {

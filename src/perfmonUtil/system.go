@@ -26,10 +26,11 @@ import (
 	"strings"
 )
 
-func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (*entity.SystemInfo, error) {
-	stats := &entity.SystemInfo{}
-	var err error
+func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (stats *entity.SystemInfo, err error) {
 	if perfOptions.SystemCPU {
+		if stats == nil {
+			stats = &entity.SystemInfo{}
+		}
 		err = getCPU(client, stats)
 		if err != nil {
 			return nil, err
@@ -37,6 +38,9 @@ func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (*entity.
 	}
 
 	if perfOptions.SystemMem {
+		if stats == nil {
+			stats = &entity.SystemInfo{}
+		}
 		stats.MemInfo = &entity.SystemMemInfo{}
 		err = getMemInfo(client, stats)
 		if err != nil {
@@ -45,6 +49,9 @@ func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (*entity.
 	}
 
 	if perfOptions.SystemNetWorking {
+		if stats == nil {
+			stats = &entity.SystemInfo{}
+		}
 		err = getInterfaces(client, stats)
 		if err != nil {
 			return nil, err

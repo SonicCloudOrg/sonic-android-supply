@@ -106,13 +106,13 @@ type ProcessStatus struct {
 }
 
 type ProcessInfo struct {
-	Name           string  `json:"name"`
-	Pid            string  `json:"pid"`
-	CpuUtilization *float64 `json:"cpuUtilization"`
-	PhyRSS         *int     `json:"phyRSS"`
-	VmSize         *int     `json:"vmRSS"`
-	Threads        *int     `json:"threadCount"`
-	FPS            *int     `json:"fps"`
+	Name           string   `json:"name"`
+	Pid            string   `json:"pid"`
+	CpuUtilization *float64 `json:"cpuUtilization,omitempty"`
+	PhyRSS         *int     `json:"phyRSS,omitempty"`
+	VmSize         *int     `json:"vmRSS,omitempty"`
+	Threads        *int     `json:"threadCount,omitempty"`
+	FPS            *int     `json:"fps,omitempty"`
 }
 
 func (i *ProcessInfo) ToJson() string {
@@ -125,7 +125,7 @@ func (i *ProcessInfo) ToFormat() string {
 	return string(str)
 }
 
-func (i *ProcessInfo) ToString() string{
+func (i *ProcessInfo) ToString() string {
 	return i.ToJson()
 }
 
