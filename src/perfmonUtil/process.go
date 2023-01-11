@@ -386,9 +386,11 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 
 		processInfo.FPS = &fps
 	}
+	if processInfo != nil {
+		processInfo.Name = status.Name
+		processInfo.Pid = status.Pid
+	}
 
-	processInfo.Name = status.Name
-	processInfo.Pid = status.Pid
 	return
 }
 
