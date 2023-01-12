@@ -33,22 +33,43 @@ var perfmonCmd = &cobra.Command{
 	Use:   "perfmon",
 	Short: "Get device performance",
 	Long:  "Get device performance",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		device := util.GetDevice(serial)
-		pid, err := perfmonUtil.GetPidOnPackageName(device, packageName)
-		if err != nil {
-			fmt.Println("no corresponding application PID found")
-			os.Exit(0)
+		pidStr := ""
+		if pid == -1 {
+			pidStr, err = perfmonUtil.GetPidOnPackageName(device, packageName)
+			if err != nil {
+				fmt.Println("no corresponding application PID found")
+				os.Exit(0)
+			}
+		} else {
+			pidStr = fmt.Sprintf("%d", pid)
 		}
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, os.Interrupt, os.Kill)
 
-		if !perfOptions.ProcMem && !perfOptions.ProcCPU &&
-			!perfOptions.ProcFPS && !perfOptions.SystemCPU &&
-			!perfOptions.SystemGPU && !perfOptions.SystemNetWorking &&
+		if (pid == -1 && packageName == "") &&
+			!perfOptions.SystemCPU &&
+			!perfOptions.SystemGPU &&
+			!perfOptions.SystemNetWorking &&
 			!perfOptions.SystemMem {
-			perfOptions.SystemCPU = true
-			perfOptions.SystemMem = true
+			sysAllParamsSet()
+		}
+
+		if (pid != -1 || packageName != "") &&
+			!perfOptions.ProcMem &&
+			!perfOptions.ProcCPU &&
+			!perfOptions.ProcThreads &&
+			!perfOptions.ProcFPS &&
+			!perfOptions.SystemCPU &&
+			!perfOptions.SystemNetWorking &&
+			!perfOptions.SystemGPU &&
+			!perfOptions.SystemMem {
+			sysAllParamsSet()
+			perfOptions.ProcMem = true
+			perfOptions.ProcCPU = true
+			perfOptions.ProcThreads = true
+			perfOptions.ProcFPS = true
 		}
 
 		timer := time.Tick(time.Duration(refreshTime * int(time.Millisecond)))
@@ -63,7 +84,7 @@ var perfmonCmd = &cobra.Command{
 				if err1 != nil {
 					log.Panic(err1)
 				}
-				processInfo, err2 := perfmonUtil.GetProcessInfo(device, pid, packageName, perfOptions, 1)
+				processInfo, err2 := perfmonUtil.GetProcessInfo(device, pidStr, packageName, perfOptions, 1)
 				if err2 != nil {
 					log.Panic(err2)
 				}
@@ -77,6 +98,7 @@ var perfmonCmd = &cobra.Command{
 
 			}
 		}
+		return nil
 	},
 }
 
@@ -87,6 +109,13 @@ var (
 	refreshTime int
 )
 
+func sysAllParamsSet() {
+	perfOptions.SystemCPU = true
+	perfOptions.SystemMem = true
+	perfOptions.SystemGPU = true
+	perfOptions.SystemNetWorking = true
+}
+
 func init() {
 	rootCmd.AddCommand(perfmonCmd)
 	perfmonCmd.Flags().StringVarP(&serial, "serial", "s", "", "device serial (default first device)")
@@ -96,7 +125,7 @@ func init() {
 	perfmonCmd.Flags().BoolVar(&perfOptions.SystemMem, "sys-mem", false, "get system memory data")
 	//perfmonCmd.Flags().BoolVar(&sysDisk, "sys-disk", false, "get system disk data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.SystemNetWorking, "sys-network", false, "get system networking data")
-	perfmonCmd.Flags().BoolVar(&perfOptions.SystemGPU, "gpu", false, "get gpu data")
+	//perfmonCmd.Flags().BoolVar(&perfOptions.SystemGPU, "gpu", false, "get gpu data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcFPS, "proc-fps", false, "get fps data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcThreads, "proc-threads", false, "get process threads")
 	//perfmonCmd.Flags().BoolVar(&, "proc-network", false, "get process network data")
