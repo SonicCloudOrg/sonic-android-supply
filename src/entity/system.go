@@ -58,6 +58,7 @@ type SystemCPUInfo struct {
 	SoftIrq float32 `json:"softIrq"`
 	Steal   float32 `json:"steal"`
 	Guest   float32 `json:"guest"`
+	Usage   float32 `json:"cpuUsage"`
 }
 
 type SystemMemInfo struct {
