@@ -258,7 +258,7 @@ func getCPU(client *adb.Device, stats *entity.SystemInfo) (err error) {
 			var cpuNowTime = float32(nowCPU.User + nowCPU.Nice + nowCPU.System + nowCPU.Iowait + nowCPU.Irq + nowCPU.SoftIrq)
 			var cpuPreTime = float32(preCPU.User + preCPU.Nice + preCPU.System + preCPU.Iowait + preCPU.Irq + preCPU.SoftIrq)
 
-			cpu.Usage = (cpuNowTime - cpuPreTime) / ((cpuNowTime + float32(nowCPU.Idle)) - (cpuPreTime + float32(preCPU.Idle)))
+			cpu.Usage = (cpuNowTime - cpuPreTime) / ((cpuNowTime + float32(nowCPU.Idle)) - (cpuPreTime + float32(preCPU.Idle))) * 100
 			stats.CPU[fields[0]] = cpu
 		}
 	}
