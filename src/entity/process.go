@@ -113,6 +113,7 @@ type ProcessInfo struct {
 	VmSize         *int     `json:"vmRSS,omitempty"`
 	Threads        *int     `json:"threadCount,omitempty"`
 	FPS            *int     `json:"fps,omitempty"`
+	Error          []string `json:"error"`
 }
 
 func (i *ProcessInfo) ToJson() string {

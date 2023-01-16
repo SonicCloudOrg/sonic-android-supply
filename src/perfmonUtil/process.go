@@ -337,12 +337,12 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 	var stat *entity.ProcessStat
 	stat, err = getStatOnPid(client, pid)
 	if err != nil {
-		return nil, err
+		processInfo.Error = append(processInfo.Error, err.Error())
 	}
 	var status *entity.ProcessStatus
 	status, err = getStatusOnPid(client, pid)
 	if err != nil {
-		return nil, err
+		processInfo.Error = append(processInfo.Error, err.Error())
 	}
 
 	if perfOptions.ProcThreads {
@@ -351,7 +351,7 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 		}
 		var threads int
 		if threads, err = strconv.Atoi(status.Threads); err != nil {
-			return nil, err
+			processInfo.Error = append(processInfo.Error, err.Error())
 		}
 		processInfo.Threads = &threads
 	}
@@ -381,7 +381,11 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 		fps, err = getProcessFPSBySurfaceFlinger(client, packageName)
 
 		if fps <= 0 || err != nil {
-			fps, _ = getProcessFPSByGFXInfo(client, pid)
+			fps, err = getProcessFPSByGFXInfo(client, pid)
+		}
+
+		if err != nil {
+			processInfo.Error = append(processInfo.Error, err.Error())
 		}
 
 		processInfo.FPS = &fps

@@ -23,7 +23,6 @@ import (
 	"github.com/SonicCloudOrg/sonic-android-supply/src/perfmonUtil"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
 	"github.com/spf13/cobra"
-	"log"
 	"os"
 	"os/signal"
 	"time"
@@ -74,22 +73,46 @@ var perfmonCmd = &cobra.Command{
 
 		timer := time.Tick(time.Duration(refreshTime * int(time.Millisecond)))
 		done := false
+		hasErr := false
 		for !done {
 			select {
 			case <-sig:
 				done = true
 				fmt.Println()
 			case <-timer:
-				sysStatus, err1 := perfmonUtil.GetSystemStats(device, perfOptions)
-				if err1 != nil {
-					log.Panic(err1)
-				}
-				processInfo, err2 := perfmonUtil.GetProcessInfo(device, pidStr, packageName, perfOptions, 1)
-				if err2 != nil {
-					log.Panic(err2)
-				}
 				var perfData = &entity.PerfmonData{}
+				sysStatus, _ := perfmonUtil.GetSystemStats(device, perfOptions)
 				perfData.System = sysStatus
+
+				if hasErr && pid == -1 && packageName != "" {
+					pidStr, err = perfmonUtil.GetPidOnPackageName(device, packageName)
+					if err != nil {
+						var defaultFloatValue = 0.0
+						var defaultValue = 0
+						var processInfo = &entity.ProcessInfo{
+							Name:           packageName,
+							Pid:            "-1",
+							CpuUtilization: &defaultFloatValue,
+							PhyRSS:         &defaultValue,
+							VmSize:         &defaultValue,
+							Threads:        &defaultValue,
+							FPS:            &defaultValue,
+						}
+						perfData.Process = processInfo
+						perfData.TimeStamp = time.Now().Unix()
+						data := util.ResultData(perfData)
+						fmt.Println(util.Format(data, isFormat, isJson))
+						continue
+					}
+				}
+
+				processInfo, _ := perfmonUtil.GetProcessInfo(device, pidStr, packageName, perfOptions, 1)
+
+				if len(processInfo.Error) != 0 {
+					hasErr = true
+				} else {
+					hasErr = false
+				}
 				perfData.Process = processInfo
 				perfData.TimeStamp = time.Now().Unix()
 
