@@ -34,9 +34,9 @@ import (
 )
 
 func getStatOnPid(client *adb.Device, pid string) (stat *entity.ProcessStat, err error) {
-	lines, err := client.OpenShell(fmt.Sprintf("/bin/cat /proc/%s/stat", pid))
+	lines, err := client.OpenShell(fmt.Sprintf("cat /proc/%s/stat", pid))
 	if err != nil {
-		return nil, fmt.Errorf("exec command erro : " + fmt.Sprintf("/bin/cat /proc/%s/stat", pid))
+		return nil, fmt.Errorf("exec command erro : " + fmt.Sprintf("cat /proc/%s/stat", pid))
 	}
 	data, err := ioutil.ReadAll(lines)
 	if err != nil {
@@ -67,9 +67,9 @@ func GetPidOnPackageName(client *adb.Device, appName string) (pid string, err er
 }
 
 func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatus, err error) {
-	lines, err1 := client.OpenShell(fmt.Sprintf("/bin/cat /proc/%s/status", pid))
+	lines, err1 := client.OpenShell(fmt.Sprintf("cat /proc/%s/status", pid))
 	if err1 != nil {
-		return status, fmt.Errorf("exec command erro : " + fmt.Sprintf("/bin/cat /proc/%s/status", pid))
+		return status, fmt.Errorf("exec command erro : " + fmt.Sprintf("cat /proc/%s/status", pid))
 	}
 	data, err := ioutil.ReadAll(lines)
 	if err != nil {

@@ -65,7 +65,7 @@ func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (stats *e
 }
 
 func getMemInfo(client *adb.Device, stats *entity.SystemInfo) (err error) {
-	lines, err := client.OpenShell("/bin/cat /proc/meminfo")
+	lines, err := client.OpenShell("cat /proc/meminfo")
 	if err != nil {
 		return
 	}
@@ -102,10 +102,10 @@ func getMemInfo(client *adb.Device, stats *entity.SystemInfo) (err error) {
 
 func getInterfaces(client *adb.Device, stats *entity.SystemInfo) (err error) {
 	var lines io.ReadCloser
-	lines, err = client.OpenShell("/bin/ip -o addr")
+	lines, err = client.OpenShell("ip -o addr")
 	if err != nil {
 		// try /sbin/ip
-		lines, err = client.OpenShell("/sbin/ip -o addr")
+		lines, err = client.OpenShell("/bin/ip -o addr")
 		if err != nil {
 			return
 		}
@@ -145,7 +145,7 @@ func getInterfaces(client *adb.Device, stats *entity.SystemInfo) (err error) {
 }
 
 func getInterfaceInfo(client *adb.Device, stats *entity.SystemInfo) (err error) {
-	lines, err := client.OpenShell("/bin/cat /proc/net/dev")
+	lines, err := client.OpenShell("cat /proc/net/dev")
 	if err != nil {
 		return
 	}
@@ -216,7 +216,7 @@ var preCPU entity.SystemCpuRaw
 var preCPUMap map[string]entity.SystemCpuRaw
 
 func getCPU(client *adb.Device, stats *entity.SystemInfo) (err error) {
-	lines, err := client.OpenShell("/bin/cat /proc/stat")
+	lines, err := client.OpenShell("cat /proc/stat")
 	if err != nil {
 		return
 	}
