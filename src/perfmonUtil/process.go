@@ -66,6 +66,36 @@ func GetPidOnPackageName(client *adb.Device, appName string) (pid string, err er
 	return regResultSplit[len(regResultSplit)-1][4:], nil
 }
 
+func getMemTotalPSS(client *adb.Device, packageName string) (result int, err error) {
+	lines, err := client.OpenShell(fmt.Sprintf("dumpsys meminfo %s", packageName))
+	if err != nil {
+		return
+	}
+	scanner := bufio.NewScanner(lines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "TOTAL") {
+			s := strings.Split(line, " ")
+			flag := false
+			for _, v := range s {
+				if len(v) == 0 {
+					continue
+				}
+				if v == "TOTAL" {
+					flag = true
+					continue
+				}
+				if flag {
+					result, _ = strconv.Atoi(v)
+					break
+				}
+			}
+			break
+		}
+	}
+	return
+}
+
 func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatus, err error) {
 	lines, err1 := client.OpenShell(fmt.Sprintf("cat /proc/%s/status", pid))
 	if err1 != nil {
@@ -362,6 +392,8 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 		}
 		processInfo.PhyRSS = &stat.Rss
 		processInfo.VmSize = &stat.Vsize
+		pss, _ := getMemTotalPSS(client, packageName)
+		processInfo.TotalPSS = &pss
 	}
 
 	if perfOptions.ProcCPU {

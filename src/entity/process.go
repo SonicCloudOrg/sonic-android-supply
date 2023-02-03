@@ -109,6 +109,7 @@ type ProcessInfo struct {
 	Name           string   `json:"name"`
 	Pid            string   `json:"pid"`
 	CpuUtilization *float64 `json:"cpuUtilization,omitempty"`
+	TotalPSS       *int     `json:"totalPSS,omitempty"`
 	PhyRSS         *int     `json:"phyRSS,omitempty"`
 	VmSize         *int     `json:"vmRSS,omitempty"`
 	Threads        *int     `json:"threadCount,omitempty"`
