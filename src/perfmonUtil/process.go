@@ -55,7 +55,7 @@ func GetPidOnPackageName(client *adb.Device, appName string) (pid string, err er
 		log.Panic(err)
 	}
 
-	reg := regexp.MustCompile(fmt.Sprintf("ACTIVITY\\s%s.*", appName))
+	reg := regexp.MustCompile(fmt.Sprintf("ACTIVITY\\s%s.*\\d", appName))
 
 	regResult := reg.FindString(string(data))
 
@@ -380,8 +380,10 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 			processInfo = &entity.ProcessInfo{}
 		}
 		var threads int
-		if threads, err = strconv.Atoi(status.Threads); err != nil {
-			processInfo.Error = append(processInfo.Error, err.Error())
+		if len(status.Threads) > 0 {
+			if threads, err = strconv.Atoi(status.Threads); err != nil {
+				processInfo.Error = append(processInfo.Error, err.Error())
+			}
 		}
 		processInfo.Threads = &threads
 	}
@@ -490,9 +492,9 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, 
 	activity := ""
 
 	scanner := bufio.NewScanner(lines)
+	reg := regexp.MustCompile("\\[.*#0|\\(.*\\)")
 	for scanner.Scan() {
 		line := scanner.Text()
-		reg := regexp.MustCompile("\\[.*#0")
 
 		activity = reg.FindString(line)
 
@@ -504,8 +506,8 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, 
 	if activity == "" {
 		return 0, errors.New(fmt.Sprintf("could not find app %s activity", pkg))
 	}
-	//var r = strings.NewReplacer("[", "", "")
-	activity = strings.Replace(activity, "[", "", 1)
+	r := strings.NewReplacer("[", "", "(", "", ")", "")
+	activity = r.Replace(activity)
 
 	lines, err = client.OpenShell(
 		fmt.Sprintf("dumpsys SurfaceFlinger --latency '%s'", activity))
