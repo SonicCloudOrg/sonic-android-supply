@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math"
 	"regexp"
 	"strconv"
@@ -40,7 +39,7 @@ func getStatOnPid(client *adb.Device, pid string) (stat *entity.ProcessStat, err
 	}
 	data, err := ioutil.ReadAll(lines)
 	if err != nil {
-		log.Panic(err)
+		return
 	}
 	return newProcessStat(string(data))
 }
@@ -52,7 +51,7 @@ func GetPidOnPackageName(client *adb.Device, appName string) (pid string, err er
 	}
 	data, err := ioutil.ReadAll(dumpsysData)
 	if err != nil {
-		log.Panic(err)
+		return
 	}
 
 	reg := regexp.MustCompile(fmt.Sprintf("ACTIVITY\\s%s.*\\d", appName))
@@ -103,7 +102,7 @@ func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatu
 	}
 	data, err := ioutil.ReadAll(lines)
 	if err != nil {
-		log.Panic(err)
+		return
 	}
 	scanner := bufio.NewScanner(strings.NewReader(string(data)))
 	status = &entity.ProcessStatus{}
@@ -425,7 +424,7 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 		processInfo.FPS = &fps
 	}
 	if processInfo != nil {
-		processInfo.Name = status.Name
+		processInfo.Name = packageName
 		processInfo.Pid = status.Pid
 	}
 
