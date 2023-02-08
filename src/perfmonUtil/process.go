@@ -109,6 +109,9 @@ func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatu
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
 		var fieldName = strings.TrimRight(fields[0], ":")
 		var value = strings.Join(fields[1:], " ")
 		switch fieldName {
@@ -256,7 +259,7 @@ func newProcessStat(statStr string) (*entity.ProcessStat, error) {
 				if err1 != nil {
 					return nil, err1
 				}
-				processStat.Cmajflt = num
+				processStat.Majflt = num
 			case 13:
 				num, err1 := strconv.Atoi(value)
 				if err1 != nil {
@@ -280,43 +283,43 @@ func newProcessStat(statStr string) (*entity.ProcessStat, error) {
 				if err1 != nil {
 					return nil, err1
 				}
-				processStat.Priority = num
+				processStat.Cstime = num
 			case 17:
 				num, err1 := strconv.Atoi(value)
 				if err1 != nil {
 					return nil, err1
 				}
-				processStat.Nice = num
+				processStat.Priority = num
 			case 18:
 				num, err1 := strconv.Atoi(value)
 				if err1 != nil {
 					return nil, err1
 				}
-				processStat.Num_threads = num
+				processStat.Nice = num
 			case 19:
 				num, err1 := strconv.Atoi(value)
 				if err1 != nil {
 					return nil, err1
 				}
-				processStat.Itrealvalue = num
+				processStat.Num_threads = num
 			case 20:
 				num, err1 := strconv.Atoi(value)
 				if err1 != nil {
 					return nil, err1
 				}
-				processStat.Starttime = num
+				processStat.Itrealvalue = num
 			case 21:
 				num, err1 := strconv.Atoi(value)
 				if err1 != nil {
 					return nil, err1
 				}
-				processStat.Vsize = num
+				processStat.Starttime = num
 			case 22:
 				num, err1 := strconv.Atoi(value)
 				if err1 != nil {
 					return nil, err1
 				}
-				processStat.Rss = num
+				processStat.Vsize = num
 			case 23:
 				num, err1 := strconv.Atoi(value)
 				if err1 != nil {
