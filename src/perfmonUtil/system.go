@@ -281,5 +281,5 @@ func GetCurrentActivity(client *adb.Device) string {
 	}
 	dataSplit := strings.Split(string(data), " ")
 	var activity = dataSplit[len(dataSplit)-1]
-	return strings.Replace(activity, "}", "", -1)
+	return strings.TrimSpace(strings.Replace(activity, "}", "", -1))
 }
