@@ -70,7 +70,6 @@ var perfmonCmd = &cobra.Command{
 			perfOptions.ProcThreads = true
 			perfOptions.ProcFPS = true
 		}
-
 		timer := time.Tick(time.Duration(refreshTime * int(time.Millisecond)))
 		done := false
 		for !done {
@@ -84,6 +83,8 @@ var perfmonCmd = &cobra.Command{
 				var perfData = &entity.PerfmonData{}
 				perfData.System = sysStatus
 				perfData.Process = processInfo
+				perfData.Activity = perfmonUtil.GetCurrentActivity(device)
+
 				perfData.TimeStamp = time.Now().Unix()
 
 				data := util.ResultData(perfData)

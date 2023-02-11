@@ -18,3 +18,8 @@ func TestGetFPS(t *testing.T) {
 	r, _ := getProcessFPSBySurfaceFlinger(device, "com.android.browser")
 	fmt.Println(r)
 }
+
+func TestGetCurrentActivity(t *testing.T) {
+	setupDevice("91cf5f1c")
+	fmt.Println(GetCurrentActivity(device))
+}

@@ -118,25 +118,25 @@ type ProcessInfo struct {
 }
 
 type ProcMemInfo struct {
-	TotalPSS  int   `json:"totalPSS,omitempty"`
-	PhyRSS    int   `json:"phyRSS,omitempty"`
-	VmSize    int   `json:"vmRSS,omitempty"`
-	TimeStamp int64 `json:"timeStamp,omitempty"`
+	TotalPSS  int   `json:"totalPSS"`
+	PhyRSS    int   `json:"phyRSS"`
+	VmSize    int   `json:"vmRSS"`
+	TimeStamp int64 `json:"timeStamp"`
 }
 
 type ProcCpuInfo struct {
-	CpuUtilization float64 `json:"cpuUtilization,omitempty"`
-	TimeStamp      int64   `json:"timeStamp,omitempty"`
+	CpuUtilization float64 `json:"cpuUtilization"`
+	TimeStamp      int64   `json:"timeStamp"`
 }
 
 type ProcTreadsInfo struct {
-	Threads   int   `json:"threadCount,omitempty"`
-	TimeStamp int64 `json:"timeStamp,omitempty"`
+	Threads   int   `json:"threadCount"`
+	TimeStamp int64 `json:"timeStamp"`
 }
 
 type ProcFPSInfo struct {
-	FPS       int   `json:"fps,omitempty"`
-	TimeStamp int64 `json:"timeStamp,omitempty"`
+	FPS       int   `json:"fps"`
+	TimeStamp int64 `json:"timeStamp"`
 }
 
 func (i *ProcessInfo) ToJson() string {

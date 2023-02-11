@@ -65,8 +65,8 @@ func GetPidOnPackageName(client *adb.Device, appName string) (pid string, err er
 	return regResultSplit[len(regResultSplit)-1][4:], nil
 }
 
-func getMemTotalPSS(client *adb.Device, packageName string) (result int, err error) {
-	lines, err := client.OpenShell(fmt.Sprintf("dumpsys meminfo %s", packageName))
+func getMemTotalPSS(client *adb.Device, pid string) (result int, err error) {
+	lines, err := client.OpenShell(fmt.Sprintf("dumpsys meminfo %s", pid))
 	if err != nil {
 		return
 	}
@@ -368,7 +368,7 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 		if processInfo == nil {
 			processInfo = &entity.ProcessInfo{}
 		}
-		pss, _ := getMemTotalPSS(client, packageName)
+		pss, _ := getMemTotalPSS(client, pid)
 		processInfo.MemInfo = entity.ProcMemInfo{
 			PhyRSS:    stat.Rss,
 			VmSize:    stat.Vsize,

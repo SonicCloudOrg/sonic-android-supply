@@ -22,6 +22,7 @@ import (
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 	"io"
+	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
@@ -267,4 +268,18 @@ func getCPU(client *adb.Device, stats *entity.SystemInfo) (err error) {
 		}
 	}
 	return nil
+}
+
+func GetCurrentActivity(client *adb.Device) string {
+	lines, err := client.OpenShell("dumpsys window | grep  mCurrentFocus")
+	if err != nil {
+		panic(err)
+	}
+	data, err := ioutil.ReadAll(lines)
+	if err != nil {
+		panic(err)
+	}
+	dataSplit := strings.Split(string(data), " ")
+	var activity = dataSplit[len(dataSplit)-1]
+	return strings.Replace(activity, "}", "", -1)
 }

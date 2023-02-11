@@ -26,7 +26,7 @@ type SystemNetworkInfo struct {
 	IPv6      string `json:"ipv6"`
 	Rx        uint64 `json:"rx"`
 	Tx        uint64 `json:"tx"`
-	TimeStamp int64  `json:"timeStamp,omitempty"`
+	TimeStamp int64  `json:"timeStamp"`
 }
 
 type SystemCpuRaw struct {
@@ -53,18 +53,18 @@ type SystemCPUInfo struct {
 	Steal     float32 `json:"steal"`
 	Guest     float32 `json:"guest"`
 	Usage     float32 `json:"cpuUsage"`
-	TimeStamp int64   `json:"timeStamp,omitempty"`
+	TimeStamp int64   `json:"timeStamp"`
 }
 
 type SystemMemInfo struct {
-	MemTotal   uint64 `json:"memTotal,omitempty"`
-	MemFree    uint64 `json:"memFree,omitempty"`
-	MemBuffers uint64 `json:"memBuffers,omitempty"`
-	MemCached  uint64 `json:"memCached,omitempty"`
-	MemUsage   uint64 `json:"memUsage,omitempty"`
-	SwapTotal  uint64 `json:"swapTotal,omitempty"`
-	SwapFree   uint64 `json:"swapFree,omitempty"`
-	TimeStamp  int64  `json:"timeStamp,omitempty"`
+	MemTotal   uint64 `json:"memTotal"`
+	MemFree    uint64 `json:"memFree"`
+	MemBuffers uint64 `json:"memBuffers"`
+	MemCached  uint64 `json:"memCached"`
+	MemUsage   uint64 `json:"memUsage"`
+	SwapTotal  uint64 `json:"swapTotal"`
+	SwapFree   uint64 `json:"swapFree"`
+	TimeStamp  int64  `json:"timeStamp"`
 }
 
 type SystemInfo struct {
