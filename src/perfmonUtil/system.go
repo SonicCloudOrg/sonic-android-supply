@@ -24,6 +24,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (stats *entity.SystemInfo, err error) {
@@ -66,6 +67,7 @@ func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (stats *e
 
 func getMemInfo(client *adb.Device, stats *entity.SystemInfo) (err error) {
 	lines, err := client.OpenShell("cat /proc/meminfo")
+	stats.MemInfo.TimeStamp = time.Now().Unix()
 	if err != nil {
 		return
 	}
@@ -172,6 +174,7 @@ func getInterfaceInfo(client *adb.Device, stats *entity.SystemInfo) (err error) 
 				}
 				info.Rx = rx
 				info.Tx = tx
+				info.TimeStamp = time.Now().Unix()
 				stats.NetworkInfo[intf] = info
 			}
 		}
@@ -259,6 +262,7 @@ func getCPU(client *adb.Device, stats *entity.SystemInfo) (err error) {
 			var cpuPreTime = float32(preCPU.User + preCPU.Nice + preCPU.System + preCPU.Iowait + preCPU.Irq + preCPU.SoftIrq)
 
 			cpu.Usage = (cpuNowTime - cpuPreTime) / ((cpuNowTime + float32(nowCPU.Idle)) - (cpuPreTime + float32(preCPU.Idle))) * 100
+			cpu.TimeStamp = time.Now().Unix()
 			stats.CPU[fields[0]] = cpu
 		}
 	}

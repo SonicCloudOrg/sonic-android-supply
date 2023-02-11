@@ -57,6 +57,7 @@ type ProcessStat struct {
 	Vsize       int
 	Rss         int
 	Rsslim      int
+	TimeStamp   int64
 }
 
 type ProcessStatus struct {
@@ -103,18 +104,39 @@ type ProcessStatus struct {
 	CpusAllowedList          string `json:"cpusAllowedList"`
 	VoluntaryCtxtSwitches    string `json:"voluntaryCtxtSwitches"`
 	NonVoluntaryCtxtSwitches string `json:"nonVoluntaryCtxtSwitches"`
+	TimeStamp                int64
 }
 
 type ProcessInfo struct {
-	Name           string   `json:"name"`
-	Pid            string   `json:"pid"`
-	CpuUtilization *float64 `json:"cpuUtilization,omitempty"`
-	TotalPSS       *int     `json:"totalPSS,omitempty"`
-	PhyRSS         *int     `json:"phyRSS,omitempty"`
-	VmSize         *int     `json:"vmRSS,omitempty"`
-	Threads        *int     `json:"threadCount,omitempty"`
-	FPS            *int     `json:"fps,omitempty"`
-	Error          []string `json:"error"`
+	Name       string         `json:"name"`
+	Pid        string         `json:"pid"`
+	CPUInfo    ProcCpuInfo    `json:"cpuInfo,omitempty"`
+	MemInfo    ProcMemInfo    `json:"memInfo,omitempty"`
+	FPSInfo    ProcFPSInfo    `json:"fpsInfo,omitempty"`
+	ThreadInfo ProcTreadsInfo `json:"threadInfo,omitempty"`
+	Error      []string       `json:"error"`
+}
+
+type ProcMemInfo struct {
+	TotalPSS  int   `json:"totalPSS,omitempty"`
+	PhyRSS    int   `json:"phyRSS,omitempty"`
+	VmSize    int   `json:"vmRSS,omitempty"`
+	TimeStamp int64 `json:"timeStamp,omitempty"`
+}
+
+type ProcCpuInfo struct {
+	CpuUtilization float64 `json:"cpuUtilization,omitempty"`
+	TimeStamp      int64   `json:"timeStamp,omitempty"`
+}
+
+type ProcTreadsInfo struct {
+	Threads   int   `json:"threadCount,omitempty"`
+	TimeStamp int64 `json:"timeStamp,omitempty"`
+}
+
+type ProcFPSInfo struct {
+	FPS       int   `json:"fps,omitempty"`
+	TimeStamp int64 `json:"timeStamp,omitempty"`
 }
 
 func (i *ProcessInfo) ToJson() string {
@@ -130,30 +152,3 @@ func (i *ProcessInfo) ToFormat() string {
 func (i *ProcessInfo) ToString() string {
 	return i.ToJson()
 }
-
-//func (i *ProcessInfo) ToString() string {
-//
-//	var result = fmt.Sprintf(
-//		//%s%s%s%s up %s%s%s
-//		`
-//PID:%s%s%s Name:%s%s%s
-//
-//CPU:
-//    %s%.2f%s%% cpuUtilizetion
-//    %s%d%s     ThreadCount
-//
-//Memory:
-//    physicalMemory    = %s%d%s
-//    virtualMemory     = %s%d%s
-//
-//`,
-//		escBrightWhite, i.Name, escReset,
-//		escBrightWhite, i.Pid, escReset,
-//		escBrightWhite, i.CpuUtilization, escReset,
-//		escBrightWhite, i.Threads, escReset,
-//		escBrightWhite, i.PhyRSS, escReset,
-//		escBrightWhite, i.VmSize, escReset,
-//	)
-//	return result
-//	//return fmt.Sprintf("name:%s pid:%s cpuUtilizetion:%f phyRss:%d vmRss:%d threadCount:%d readCharCount:%d writeCharCount:%d timeStamp:%d", i.Name, i.Pid, i.CpuUtilization, i.PhyRSS, i.VmSize, i.Threads, i.Rchar, i.Wchar, time.Now().Unix())
-//}

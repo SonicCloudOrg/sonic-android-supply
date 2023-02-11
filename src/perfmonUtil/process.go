@@ -203,6 +203,7 @@ func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatu
 			status.NonVoluntaryCtxtSwitches = value
 		}
 	}
+	status.TimeStamp = time.Now().Unix()
 	return status, err1
 }
 
@@ -335,42 +336,57 @@ func newProcessStat(statStr string) (*entity.ProcessStat, error) {
 			}
 		}
 	}
+	processStat.TimeStamp = time.Now().Unix()
 	return processStat, nil
 }
 
-func IsNum(s string) bool {
-	_, err := strconv.ParseFloat(s, 64)
-	return err == nil
-}
-
-func getCpuUsage(client *adb.Device, pid string) {
-	status, err := getStatOnPid(client, pid)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	var nowTick = float64(status.Utime) + float64(status.Stime)
+func getProcCpuUsage(stat *entity.ProcessStat) float64 {
+	var nowTick = float64(stat.Utime) + float64(stat.Stime)
 	if preTick == -1.0 {
 		preTick = nowTick
-		return
+		return 0.0
 	}
-	cpuUtilization = ((nowTick - preTick) / (HZ * sleepTime)) * 100
+	cpuUtilization := ((nowTick - preTick) / (HZ * intervalTime)) * 100
 	preTick = nowTick
-	time.Sleep(time.Duration(int(sleepTime) * int(time.Second)))
+	return cpuUtilization
 }
 
 var preTick = -1.0
-var sleepTime = 1.0 // # seconds
-var HZ = 100.0      //# ticks/second
-var cpuUtilization = 0.0
+var intervalTime = 1.0 // # seconds
+var HZ = 100.0         //# ticks/second
 
 func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOptions entity.PerfOption, interval int64) (processInfo *entity.ProcessInfo, err error) {
-	sleepTime = float64(interval)
+	intervalTime = float64(interval)
+
 	var stat *entity.ProcessStat
 	stat, err = getStatOnPid(client, pid)
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
 	}
+
+	if perfOptions.ProcMem {
+		if processInfo == nil {
+			processInfo = &entity.ProcessInfo{}
+		}
+		pss, _ := getMemTotalPSS(client, packageName)
+		processInfo.MemInfo = entity.ProcMemInfo{
+			PhyRSS:    stat.Rss,
+			VmSize:    stat.Vsize,
+			TotalPSS:  pss,
+			TimeStamp: time.Now().Unix(),
+		}
+	}
+
+	if perfOptions.ProcCPU {
+		if processInfo == nil {
+			processInfo = &entity.ProcessInfo{}
+		}
+		processInfo.CPUInfo = entity.ProcCpuInfo{
+			CpuUtilization: getProcCpuUsage(stat),
+			TimeStamp:      stat.TimeStamp,
+		}
+	}
+
 	var status *entity.ProcessStatus
 	status, err = getStatusOnPid(client, pid)
 	if err != nil {
@@ -387,54 +403,38 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 				processInfo.Error = append(processInfo.Error, err.Error())
 			}
 		}
-		processInfo.Threads = &threads
-	}
-
-	if perfOptions.ProcMem {
-		if processInfo == nil {
-			processInfo = &entity.ProcessInfo{}
+		processInfo.ThreadInfo = entity.ProcTreadsInfo{
+			Threads:   threads,
+			TimeStamp: status.TimeStamp,
 		}
-		processInfo.PhyRSS = &stat.Rss
-		processInfo.VmSize = &stat.Vsize
-		pss, _ := getMemTotalPSS(client, packageName)
-		processInfo.TotalPSS = &pss
-	}
-
-	if perfOptions.ProcCPU {
-		if processInfo == nil {
-			processInfo = &entity.ProcessInfo{}
-		}
-		getCpuUsage(client, pid)
-		processInfo.CpuUtilization = &cpuUtilization
 	}
 
 	if perfOptions.ProcFPS {
 		if processInfo == nil {
 			processInfo = &entity.ProcessInfo{}
 		}
-		fps := 0
 
-		fps, err = getProcessFPSBySurfaceFlinger(client, packageName)
+		fpsInfo, err := getProcessFPSBySurfaceFlinger(client, packageName)
 
-		if fps <= 0 || err != nil {
-			fps, err = getProcessFPSByGFXInfo(client, pid)
+		if fpsInfo.FPS <= 0 || err != nil {
+			fpsInfo, err = getProcessFPSByGFXInfo(client, pid)
 		}
 
 		if err != nil {
 			processInfo.Error = append(processInfo.Error, err.Error())
 		}
 
-		processInfo.FPS = &fps
-	}
-	if processInfo != nil {
-		processInfo.Name = packageName
-		processInfo.Pid = status.Pid
+		processInfo.FPSInfo = fpsInfo
 	}
 
+	if processInfo != nil {
+		processInfo.Name = packageName
+		processInfo.Pid = pid
+	}
 	return
 }
 
-func getProcessFPSByGFXInfo(client *adb.Device, pid string) (result int, err error) {
+func getProcessFPSByGFXInfo(client *adb.Device, pid string) (result entity.ProcFPSInfo, err error) {
 	lines, err := client.OpenShell(
 		fmt.Sprintf("dumpsys gfxinfo %s | grep '.*visibility=0' -A129 | grep Draw -A128 | grep 'View hierarchy:' -B129", pid))
 	if err != nil {
@@ -467,11 +467,13 @@ func getProcessFPSByGFXInfo(client *adb.Device, pid string) (result int, err err
 			}
 		}
 	}
+	result = entity.ProcFPSInfo{}
 	if frameCount == 0 {
-		result = 0
+		result.FPS = 0
 	} else {
-		result = frameCount * 60 / (frameCount + vsyncCount)
+		result.FPS = frameCount * 60 / (frameCount + vsyncCount)
 	}
+	result.TimeStamp = time.Now().Unix()
 	return
 }
 
@@ -482,8 +484,8 @@ type RenderTime struct {
 	Execute float64
 }
 
-func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, err error) {
-	result = 0
+func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result entity.ProcFPSInfo, err error) {
+	result = entity.ProcFPSInfo{}
 	_, err = client.OpenShell("dumpsys SurfaceFlinger --latency-clear")
 	lines, err := client.OpenShell(
 		fmt.Sprintf("dumpsys SurfaceFlinger | grep %s", pkg))
@@ -506,7 +508,7 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, 
 		break
 	}
 	if activity == "" {
-		return 0, errors.New(fmt.Sprintf("could not find app %s activity", pkg))
+		return result, errors.New(fmt.Sprintf("could not find app %s activity", pkg))
 	}
 	r := strings.NewReplacer("[", "", "(", "", ")", "")
 	activity = r.Replace(activity)
@@ -548,7 +550,8 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result int, 
 	if le == 0 {
 		return
 	}
-	result = (int)(float64(le) * 1000 / (sum(t, le)))
+	result.FPS = (int)(float64(le) * 1000 / (sum(t, le)))
+	result.TimeStamp = time.Now().Unix()
 	return
 }
 
