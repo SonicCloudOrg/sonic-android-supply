@@ -271,7 +271,7 @@ func getCPU(client *adb.Device, stats *entity.SystemInfo) (err error) {
 }
 
 func GetCurrentActivity(client *adb.Device) string {
-	lines, err := client.OpenShell("dumpsys window | grep  mCurrentFocus")
+	lines, err := client.OpenShell("dumpsys window | grep mCurrentFocus")
 	if err != nil {
 		panic(err)
 	}
