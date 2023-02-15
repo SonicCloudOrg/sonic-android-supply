@@ -28,42 +28,48 @@ import (
 	"time"
 )
 
-func GetSystemStats(client *adb.Device, perfOptions entity.PerfOption) (stats *entity.SystemInfo, err error) {
+func GetSystemCPU(client *adb.Device, perfOptions entity.PerfOption, systemInfo *entity.SystemInfo) {
 	if perfOptions.SystemCPU {
-		if stats == nil {
-			stats = &entity.SystemInfo{}
+		if systemInfo == nil {
+			systemInfo = &entity.SystemInfo{}
 		}
-		err = getCPU(client, stats)
+		err := getCPU(client, systemInfo)
 		if err != nil {
-			return nil, err
+			systemInfo.Error = append(systemInfo.Error, err.Error())
 		}
 	}
+	return
+}
 
+func GetSystemMem(client *adb.Device, perfOptions entity.PerfOption, systemInfo *entity.SystemInfo) {
 	if perfOptions.SystemMem {
-		if stats == nil {
-			stats = &entity.SystemInfo{}
+		if systemInfo == nil {
+			systemInfo = &entity.SystemInfo{}
 		}
-		stats.MemInfo = &entity.SystemMemInfo{}
-		err = getMemInfo(client, stats)
+		systemInfo.MemInfo = &entity.SystemMemInfo{}
+		err := getMemInfo(client, systemInfo)
 		if err != nil {
-			return nil, err
+			systemInfo.Error = append(systemInfo.Error, err.Error())
 		}
 	}
+	return
+}
 
+func GetSystemNetwork(client *adb.Device, perfOptions entity.PerfOption, systemInfo *entity.SystemInfo) {
 	if perfOptions.SystemNetWorking {
-		if stats == nil {
-			stats = &entity.SystemInfo{}
+		if systemInfo == nil {
+			systemInfo = &entity.SystemInfo{}
 		}
-		err = getInterfaces(client, stats)
+		err := getInterfaces(client, systemInfo)
 		if err != nil {
-			return nil, err
+			systemInfo.Error = append(systemInfo.Error, err.Error())
 		}
-		err = getInterfaceInfo(client, stats)
+		err = getInterfaceInfo(client, systemInfo)
 		if err != nil {
-			return nil, err
+			systemInfo.Error = append(systemInfo.Error, err.Error())
 		}
 	}
-	return stats, nil
+	return
 }
 
 func getMemInfo(client *adb.Device, stats *entity.SystemInfo) (err error) {

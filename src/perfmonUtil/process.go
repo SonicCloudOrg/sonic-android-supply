@@ -349,56 +349,23 @@ func getProcCpuUsage(stat *entity.ProcessStat) float64 {
 		preTick = nowTick
 		return 0.0
 	}
-	cpuUtilization := ((nowTick - preTick) / (HZ * intervalTime)) * 100
+	cpuUtilization := ((nowTick - preTick) / (HZ * IntervalTime)) * 100
 	preTick = nowTick
 	return cpuUtilization
 }
 
 var preTick = -1.0
-var intervalTime = 1.0 // # seconds
+var IntervalTime = 1.0 // # seconds
 var HZ = 100.0         //# ticks/second
 
-func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOptions entity.PerfOption, interval int64) (processInfo *entity.ProcessInfo, err error) {
-	intervalTime = float64(interval)
-
-	var stat *entity.ProcessStat
-	stat, err = getStatOnPid(client, pid)
-	if err != nil {
-		processInfo.Error = append(processInfo.Error, err.Error())
-	}
-
-	if perfOptions.ProcMem {
-		if processInfo == nil {
-			processInfo = &entity.ProcessInfo{}
-		}
-		pss, _ := getMemTotalPSS(client, pid)
-		processInfo.MemInfo = entity.ProcMemInfo{
-			PhyRSS:    stat.Rss,
-			VmSize:    stat.Vsize,
-			TotalPSS:  pss,
-			TimeStamp: time.Now().Unix(),
-		}
-	}
-
-	if perfOptions.ProcCPU {
-		if processInfo == nil {
-			processInfo = &entity.ProcessInfo{}
-		}
-		processInfo.CPUInfo = entity.ProcCpuInfo{
-			CpuUtilization: getProcCpuUsage(stat),
-			TimeStamp:      stat.TimeStamp,
-		}
-	}
-
-	var status *entity.ProcessStatus
-	status, err = getStatusOnPid(client, pid)
-	if err != nil {
-		processInfo.Error = append(processInfo.Error, err.Error())
-	}
-
+func GetProcThreads(client *adb.Device, pid string, perfOptions entity.PerfOption, processInfo *entity.ProcessInfo) {
 	if perfOptions.ProcThreads {
 		if processInfo == nil {
 			processInfo = &entity.ProcessInfo{}
+		}
+		status, err := getStatusOnPid(client, pid)
+		if err != nil {
+			processInfo.Error = append(processInfo.Error, err.Error())
 		}
 		var threads int
 		if len(status.Threads) > 0 {
@@ -406,33 +373,66 @@ func GetProcessInfo(client *adb.Device, pid string, packageName string, perfOpti
 				processInfo.Error = append(processInfo.Error, err.Error())
 			}
 		}
-		processInfo.ThreadInfo = entity.ProcTreadsInfo{
+		processInfo.ThreadInfo = &entity.ProcTreadsInfo{
 			Threads:   threads,
 			TimeStamp: status.TimeStamp,
 		}
 	}
+	return
+}
 
+func GetProcFPS(client *adb.Device, pid, packageName string, perfOptions entity.PerfOption, processInfo *entity.ProcessInfo) {
 	if perfOptions.ProcFPS {
 		if processInfo == nil {
 			processInfo = &entity.ProcessInfo{}
 		}
-
 		fpsInfo, err := getProcessFPSBySurfaceFlinger(client, packageName)
 
 		if fpsInfo.FPS <= 0 || err != nil {
 			fpsInfo, err = getProcessFPSByGFXInfo(client, pid)
 		}
+		if err != nil {
+			processInfo.Error = append(processInfo.Error, err.Error())
+		}
+		processInfo.FPSInfo = &fpsInfo
+	}
+	return
+}
 
+func GetProcCpu(client *adb.Device, pid string, perfOptions entity.PerfOption, processInfo *entity.ProcessInfo) {
+	if perfOptions.ProcCPU {
+		if processInfo == nil {
+			processInfo = &entity.ProcessInfo{}
+		}
+		stat, err := getStatOnPid(client, pid)
 		if err != nil {
 			processInfo.Error = append(processInfo.Error, err.Error())
 		}
 
-		processInfo.FPSInfo = fpsInfo
+		processInfo.CPUInfo = &entity.ProcCpuInfo{
+			CpuUtilization: getProcCpuUsage(stat),
+			TimeStamp:      stat.TimeStamp,
+		}
 	}
+	return
+}
 
-	if processInfo != nil {
-		processInfo.Name = packageName
-		processInfo.Pid = pid
+func GetProcMem(client *adb.Device, pid string, perfOptions entity.PerfOption, processInfo *entity.ProcessInfo) {
+	if perfOptions.ProcMem {
+		if processInfo == nil {
+			processInfo = &entity.ProcessInfo{}
+		}
+		stat, err := getStatOnPid(client, pid)
+		if err != nil {
+			processInfo.Error = append(processInfo.Error, err.Error())
+		}
+		pss, _ := getMemTotalPSS(client, pid)
+		processInfo.MemInfo = &entity.ProcMemInfo{
+			PhyRSS:    stat.Rss,
+			VmSize:    stat.Vsize,
+			TotalPSS:  pss,
+			TimeStamp: time.Now().Unix(),
+		}
 	}
 	return
 }

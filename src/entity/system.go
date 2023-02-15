@@ -71,6 +71,7 @@ type SystemInfo struct {
 	MemInfo     *SystemMemInfo                `json:"memInfo,omitempty"`
 	NetworkInfo map[string]*SystemNetworkInfo `json:"networkInfo,omitempty"`
 	CPU         map[string]*SystemCPUInfo     `json:"cpuInfo,omitempty"`
+	Error       []string                      `json:"error"`
 	//TimeStamp   int64                         `json:"timeStamp"`
 }
 
