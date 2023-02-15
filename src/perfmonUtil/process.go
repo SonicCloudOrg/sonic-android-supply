@@ -45,24 +45,27 @@ func getStatOnPid(client *adb.Device, pid string) (stat *entity.ProcessStat, err
 }
 
 func GetPidOnPackageName(client *adb.Device, appName string) (pid string, err error) {
-	dumpsysData, err := client.OpenShell("dumpsys activity top")
+	psData, err := client.OpenShell("ps -A")
 	if err != nil {
-		return "", fmt.Errorf("exec command erro : dumpsys activity top")
+		return "", fmt.Errorf("exec command erro : ps")
 	}
-	data, err := ioutil.ReadAll(dumpsysData)
+	data, err := ioutil.ReadAll(psData)
 	if err != nil {
 		return
 	}
 
-	reg := regexp.MustCompile(fmt.Sprintf("ACTIVITY\\s%s.*\\d", appName))
+	reg := regexp.MustCompile(fmt.Sprintf(".*%s", appName))
 
 	regResult := reg.FindString(string(data))
 
 	if regResult == "" {
-		return "", fmt.Errorf("find app pid erro : dumpsys activity top not the app")
+		return "", fmt.Errorf("find app pid erro : ps not find the package name: %s", appName)
 	}
+
+	reg = regexp.MustCompile("\\s+")
+	regResult = reg.ReplaceAllString(regResult, " ")
 	regResultSplit := strings.Split(regResult, " ")
-	return regResultSplit[len(regResultSplit)-1][4:], nil
+	return regResultSplit[1], nil
 }
 
 func getMemTotalPSS(client *adb.Device, pid string) (result int, err error) {
