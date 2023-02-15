@@ -108,13 +108,13 @@ type ProcessStatus struct {
 }
 
 type ProcessInfo struct {
-	Name       string         `json:"name"`
-	Pid        string         `json:"pid"`
-	CPUInfo    ProcCpuInfo    `json:"cpuInfo,omitempty"`
-	MemInfo    ProcMemInfo    `json:"memInfo,omitempty"`
-	FPSInfo    ProcFPSInfo    `json:"fpsInfo,omitempty"`
-	ThreadInfo ProcTreadsInfo `json:"threadInfo,omitempty"`
-	Error      []string       `json:"error"`
+	Name       string          `json:"name"`
+	Pid        string          `json:"pid"`
+	CPUInfo    *ProcCpuInfo    `json:"cpuInfo,omitempty"`
+	MemInfo    *ProcMemInfo    `json:"memInfo,omitempty"`
+	FPSInfo    *ProcFPSInfo    `json:"fpsInfo,omitempty"`
+	ThreadInfo *ProcTreadsInfo `json:"threadInfo,omitempty"`
+	Error      []string        `json:"error"`
 }
 
 type ProcMemInfo struct {
