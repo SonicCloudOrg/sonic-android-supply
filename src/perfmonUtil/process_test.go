@@ -2,10 +2,9 @@ package perfmonUtil
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
+	"testing"
 )
 
 var device *adb.Device
@@ -20,9 +19,9 @@ func TestGetFPS(t *testing.T) {
 	fmt.Println(r)
 }
 
-func TestGetCurrentActivity(t *testing.T) {
-	setupDevice("91cf5f1c")
-	fmt.Println(GetCurrentActivity(device))
+func TestGetPackageCurrentActivity(t *testing.T) {
+	setupDevice("192.168.2.198:5555")
+	fmt.Println(getPackageCurrentActivity(device, "com.tencent.mm", "19799"))
 }
 
 func TestGet(t *testing.T) {

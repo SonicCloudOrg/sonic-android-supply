@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -45,31 +46,26 @@ func getStatOnPid(client *adb.Device, pid string) (stat *entity.ProcessStat, err
 }
 
 func GetPidOnPackageName(client *adb.Device, appName string) (pid string, err error) {
-	psData, err := client.OpenShell("ps -A")
+	lines, err := client.OpenShell("dumpsys activity " + appName)
 	if err != nil {
-		return "", fmt.Errorf("exec command erro : ps")
+		panic(err)
 	}
-	data, err := ioutil.ReadAll(psData)
+	data, err := ioutil.ReadAll(lines)
 	if err != nil {
-		return
+		panic(err)
 	}
-
-	reg := regexp.MustCompile(fmt.Sprintf(".*%s", appName))
-
+	reg := regexp.MustCompile(fmt.Sprintf("ACTIVITY\\s+%s.*pid=[0-9]+", appName))
 	regResult := reg.FindString(string(data))
-
-	if regResult == "" {
-		return "", fmt.Errorf("find app pid erro : ps not find the package name: %s", appName)
+	dataSplit := strings.Split(regResult, " ")
+	if len(dataSplit) < 2 {
+		return "", errors.New("unable to find the pid corresponding to app")
 	}
-
-	reg = regexp.MustCompile("\\s+")
-	regResult = reg.ReplaceAllString(regResult, " ")
-	regResultSplit := strings.Split(regResult, " ")
-	return regResultSplit[1], nil
+	packageCurrentActivity = dataSplit[1]
+	return strings.ReplaceAll(dataSplit[3], "pid=", ""), nil
 }
 
 func getMemTotalPSS(client *adb.Device, pid string) (result int, err error) {
-	lines, err := client.OpenShell(fmt.Sprintf("dumpsys meminfo %s", pid))
+	lines, err := client.OpenShell(fmt.Sprintf("dumpsys meminfo --local %s", pid))
 	if err != nil {
 		return
 	}
@@ -357,84 +353,196 @@ func getProcCpuUsage(stat *entity.ProcessStat) float64 {
 var preTick = -1.0
 var IntervalTime = 1.0 // # seconds
 var HZ = 100.0         //# ticks/second
+var packageCurrentActivity = ""
+var appPackageName = ""
+var appPid = ""
 
-func GetProcThreads(client *adb.Device, pid string, perfOptions entity.PerfOption, processInfo *entity.ProcessInfo) {
-	if perfOptions.ProcThreads {
-		if processInfo == nil {
-			processInfo = &entity.ProcessInfo{}
-		}
-		status, err := getStatusOnPid(client, pid)
-		if err != nil {
-			processInfo.Error = append(processInfo.Error, err.Error())
-		}
-		var threads int
-		if len(status.Threads) > 0 {
-			if threads, err = strconv.Atoi(status.Threads); err != nil {
-				processInfo.Error = append(processInfo.Error, err.Error())
+func GetPIDAndPackageCurrentActivity(client *adb.Device, packageName, pid string, timer <-chan time.Time, sign chan os.Signal) {
+	appPid = pid
+	appPackageName = packageName
+	go func() {
+		for {
+			select {
+			case <-sign:
+				return
+			case <-timer:
+				packageCurrentActivity = getPackageCurrentActivity(client, packageName, pid)
 			}
 		}
-		processInfo.ThreadInfo = &entity.ProcTreadsInfo{
-			Threads:   threads,
-			TimeStamp: status.TimeStamp,
-		}
+	}()
+}
+
+func getPackageCurrentActivity(client *adb.Device, packageName string, pid string) string {
+	lines, err := client.OpenShell("dumpsys activity " + packageName)
+	if err != nil {
+		panic(err)
+	}
+	data, err := ioutil.ReadAll(lines)
+	if err != nil {
+		panic(err)
+	}
+	reg := regexp.MustCompile(fmt.Sprintf("ACTIVITY\\s+%s.*%s", packageName, pid))
+	regResult := reg.FindString(string(data))
+	if regResult == "" {
+		reg = regexp.MustCompile(fmt.Sprintf("ACTIVITY\\s+%s.*\\)", packageName))
+		regResult = reg.FindString(string(data))
+	}
+	dataSplit := strings.Split(regResult, " ")
+	if len(dataSplit) < 2 {
+		return ""
+	}
+	return dataSplit[1]
+}
+
+func GetProcThreads(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
+	if perfOptions.ProcThreads {
+		go func() {
+			for {
+				select {
+				case <-sign:
+					return
+				case <-timer:
+					perfmonDataChan <- &entity.PerfmonData{
+						Process: getThreads(client),
+					}
+				}
+			}
+		}()
 	}
 	return
 }
 
-func GetProcFPS(client *adb.Device, pid, packageName string, perfOptions entity.PerfOption, processInfo *entity.ProcessInfo) {
+func getThreads(client *adb.Device) *entity.ProcessInfo {
+	processInfo := &entity.ProcessInfo{}
+	status, err := getStatusOnPid(client, appPid)
+	if err != nil {
+		processInfo.Error = append(processInfo.Error, err.Error())
+	}
+	var threads int
+	if len(status.Threads) > 0 {
+		if threads, err = strconv.Atoi(status.Threads); err != nil {
+			processInfo.Error = append(processInfo.Error, err.Error())
+		}
+	}
+	processInfo.ThreadInfo = &entity.ProcTreadsInfo{
+		Threads:   threads,
+		TimeStamp: status.TimeStamp,
+	}
+
+	processInfo.Pid = appPid
+	processInfo.Name = appPackageName
+	processInfo.Activity = packageCurrentActivity
+	return processInfo
+}
+
+func GetProcFPS(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
 	if perfOptions.ProcFPS {
-		if processInfo == nil {
-			processInfo = &entity.ProcessInfo{}
-		}
-		fpsInfo, err := getProcessFPSBySurfaceFlinger(client, packageName)
-
-		if fpsInfo.FPS <= 0 || err != nil {
-			fpsInfo, err = getProcessFPSByGFXInfo(client, pid)
-		}
-		if err != nil {
-			processInfo.Error = append(processInfo.Error, err.Error())
-		}
-		processInfo.FPSInfo = &fpsInfo
+		go func() {
+			for {
+				select {
+				case <-sign:
+					return
+				case <-timer:
+					perfmonDataChan <- &entity.PerfmonData{
+						Process: getFPS(client),
+					}
+				}
+			}
+		}()
 	}
 	return
 }
 
-func GetProcCpu(client *adb.Device, pid string, perfOptions entity.PerfOption, processInfo *entity.ProcessInfo) {
+func getFPS(client *adb.Device) *entity.ProcessInfo {
+	processInfo := &entity.ProcessInfo{}
+	fpsInfo, err := getProcessFPSBySurfaceFlinger(client, appPackageName)
+
+	if fpsInfo.FPS <= 0 || err != nil {
+		fpsInfo, err = getProcessFPSByGFXInfo(client, appPid)
+	}
+	if err != nil {
+		processInfo.Error = append(processInfo.Error, err.Error())
+	}
+	processInfo.FPSInfo = &fpsInfo
+
+	processInfo.Pid = appPid
+	processInfo.Name = appPackageName
+	processInfo.Activity = packageCurrentActivity
+	return processInfo
+}
+
+func GetProcCpu(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
 	if perfOptions.ProcCPU {
-		if processInfo == nil {
-			processInfo = &entity.ProcessInfo{}
-		}
-		stat, err := getStatOnPid(client, pid)
-		if err != nil {
-			processInfo.Error = append(processInfo.Error, err.Error())
-		}
+		go func() {
+			for {
+				select {
+				case <-sign:
+					return
+				case <-timer:
 
-		processInfo.CPUInfo = &entity.ProcCpuInfo{
-			CpuUtilization: getProcCpuUsage(stat),
-			TimeStamp:      stat.TimeStamp,
-		}
+					perfmonDataChan <- &entity.PerfmonData{
+						Process: getProcCpu(client),
+					}
+				}
+			}
+		}()
 	}
 	return
 }
 
-func GetProcMem(client *adb.Device, pid string, perfOptions entity.PerfOption, processInfo *entity.ProcessInfo) {
+func getProcCpu(client *adb.Device) *entity.ProcessInfo {
+	processInfo := &entity.ProcessInfo{}
+	stat, err := getStatOnPid(client, appPid)
+	if err != nil {
+		processInfo.Error = append(processInfo.Error, err.Error())
+	}
+
+	processInfo.CPUInfo = &entity.ProcCpuInfo{
+		CpuUtilization: getProcCpuUsage(stat),
+		TimeStamp:      stat.TimeStamp,
+	}
+	processInfo.Pid = appPid
+	processInfo.Name = appPackageName
+	processInfo.Activity = packageCurrentActivity
+	return processInfo
+}
+
+func GetProcMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
 	if perfOptions.ProcMem {
-		if processInfo == nil {
-			processInfo = &entity.ProcessInfo{}
-		}
-		stat, err := getStatOnPid(client, pid)
-		if err != nil {
-			processInfo.Error = append(processInfo.Error, err.Error())
-		}
-		pss, _ := getMemTotalPSS(client, pid)
-		processInfo.MemInfo = &entity.ProcMemInfo{
-			PhyRSS:    stat.Rss,
-			VmSize:    stat.Vsize,
-			TotalPSS:  pss,
-			TimeStamp: time.Now().Unix(),
-		}
+		go func() {
+			for {
+				select {
+				case <-sign:
+					return
+				case <-timer:
+					perfmonDataChan <- &entity.PerfmonData{
+						Process: getProcMem(client),
+					}
+				}
+			}
+		}()
+
 	}
 	return
+}
+
+func getProcMem(client *adb.Device) *entity.ProcessInfo {
+	processInfo := &entity.ProcessInfo{}
+	pss, _ := getMemTotalPSS(client, appPid)
+	stat, err := getStatOnPid(client, appPid)
+	if err != nil {
+		processInfo.Error = append(processInfo.Error, err.Error())
+	}
+	processInfo.MemInfo = &entity.ProcMemInfo{
+		PhyRSS:    stat.Rss,
+		VmSize:    stat.Vsize,
+		TotalPSS:  pss,
+		TimeStamp: time.Now().Unix(),
+	}
+	processInfo.Pid = appPid
+	processInfo.Name = appPackageName
+	processInfo.Activity = packageCurrentActivity
+	return processInfo
 }
 
 func getProcessFPSByGFXInfo(client *adb.Device, pid string) (result entity.ProcFPSInfo, err error) {

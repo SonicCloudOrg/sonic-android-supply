@@ -108,6 +108,7 @@ type ProcessStatus struct {
 }
 
 type ProcessInfo struct {
+	Activity   string          `json:"currentActivity,omitempty"`
 	Name       string          `json:"name"`
 	Pid        string          `json:"pid"`
 	CPUInfo    *ProcCpuInfo    `json:"cpuInfo,omitempty"`

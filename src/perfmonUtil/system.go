@@ -22,52 +22,86 @@ import (
 	"github.com/SonicCloudOrg/sonic-android-supply/src/adb"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 	"io"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func GetSystemCPU(client *adb.Device, perfOptions entity.PerfOption, systemInfo *entity.SystemInfo) {
+func GetSystemCPU(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
 	if perfOptions.SystemCPU {
-		if systemInfo == nil {
-			systemInfo = &entity.SystemInfo{}
-		}
-		err := getCPU(client, systemInfo)
-		if err != nil {
-			systemInfo.Error = append(systemInfo.Error, err.Error())
-		}
+		_ = getCPU(client, &entity.SystemInfo{})
+		go func() {
+			for {
+				select {
+				case <-sign:
+					return
+				case <-timer:
+					systemInfo := &entity.SystemInfo{}
+					err := getCPU(client, systemInfo)
+					if err != nil {
+						systemInfo.Error = append(systemInfo.Error, err.Error())
+					}
+					if perfmonDataChan != nil {
+						perfmonDataChan <- &entity.PerfmonData{
+							System: systemInfo,
+						}
+					}
+				}
+			}
+		}()
 	}
 	return
 }
 
-func GetSystemMem(client *adb.Device, perfOptions entity.PerfOption, systemInfo *entity.SystemInfo) {
+func GetSystemMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
 	if perfOptions.SystemMem {
-		if systemInfo == nil {
-			systemInfo = &entity.SystemInfo{}
-		}
-		systemInfo.MemInfo = &entity.SystemMemInfo{}
-		err := getMemInfo(client, systemInfo)
-		if err != nil {
-			systemInfo.Error = append(systemInfo.Error, err.Error())
-		}
+		go func() {
+			for {
+				select {
+				case <-timer:
+					systemInfo := &entity.SystemInfo{}
+					systemInfo.MemInfo = &entity.SystemMemInfo{}
+					err := getMemInfo(client, systemInfo)
+					if err != nil {
+						systemInfo.Error = append(systemInfo.Error, err.Error())
+					}
+					if perfmonDataChan != nil {
+						perfmonDataChan <- &entity.PerfmonData{
+							System: systemInfo,
+						}
+					}
+				}
+			}
+		}()
+
 	}
 	return
 }
 
-func GetSystemNetwork(client *adb.Device, perfOptions entity.PerfOption, systemInfo *entity.SystemInfo) {
+func GetSystemNetwork(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
 	if perfOptions.SystemNetWorking {
-		if systemInfo == nil {
-			systemInfo = &entity.SystemInfo{}
-		}
-		err := getInterfaces(client, systemInfo)
-		if err != nil {
-			systemInfo.Error = append(systemInfo.Error, err.Error())
-		}
-		err = getInterfaceInfo(client, systemInfo)
-		if err != nil {
-			systemInfo.Error = append(systemInfo.Error, err.Error())
-		}
+		go func() {
+			for {
+				select {
+				case <-timer:
+					systemInfo := &entity.SystemInfo{}
+					err := getInterfaces(client, systemInfo)
+					if err != nil {
+						systemInfo.Error = append(systemInfo.Error, err.Error())
+					}
+					err = getInterfaceInfo(client, systemInfo)
+					if err != nil {
+						systemInfo.Error = append(systemInfo.Error, err.Error())
+					}
+					if perfmonDataChan != nil {
+						perfmonDataChan <- &entity.PerfmonData{
+							System: systemInfo,
+						}
+					}
+				}
+			}
+		}()
 	}
 	return
 }
@@ -274,18 +308,4 @@ func getCPU(client *adb.Device, stats *entity.SystemInfo) (err error) {
 		}
 	}
 	return nil
-}
-
-func GetCurrentActivity(client *adb.Device) string {
-	lines, err := client.OpenShell("dumpsys window | grep mCurrentFocus")
-	if err != nil {
-		panic(err)
-	}
-	data, err := ioutil.ReadAll(lines)
-	if err != nil {
-		panic(err)
-	}
-	dataSplit := strings.Split(string(data), " ")
-	var activity = dataSplit[len(dataSplit)-1]
-	return strings.TrimSpace(strings.Replace(activity, "}", "", -1))
 }

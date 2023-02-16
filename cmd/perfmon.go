@@ -25,7 +25,6 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
-	"sync"
 	"time"
 )
 
@@ -66,80 +65,33 @@ var perfmonCmd = &cobra.Command{
 			!perfOptions.SystemGPU &&
 			!perfOptions.SystemMem {
 			perfmonUtil.IntervalTime = float64(refreshTime)
-			sysAllParamsSet()
+			//sysAllParamsSet()
 			perfOptions.ProcMem = true
 			perfOptions.ProcCPU = true
 			perfOptions.ProcThreads = true
 			perfOptions.ProcFPS = true
 		}
 		timer := time.Tick(time.Duration(refreshTime * int(time.Millisecond)))
-		done := false
-		for !done {
+
+		perfmonUtil.GetPIDAndPackageCurrentActivity(device, packageName, pidStr, timer, sig)
+
+		var perfDataChan = make(chan *entity.PerfmonData)
+		perfmonUtil.GetSystemCPU(device, perfOptions, perfDataChan, timer, sig)
+		perfmonUtil.GetSystemMem(device, perfOptions, perfDataChan, timer, sig)
+		perfmonUtil.GetSystemNetwork(device, perfOptions, perfDataChan, timer, sig)
+		perfmonUtil.GetProcCpu(device, perfOptions, perfDataChan, timer, sig)
+		perfmonUtil.GetProcMem(device, perfOptions, perfDataChan, timer, sig)
+		perfmonUtil.GetProcFPS(device, perfOptions, perfDataChan, timer, sig)
+		perfmonUtil.GetProcThreads(device, perfOptions, perfDataChan, timer, sig)
+
+		for {
 			select {
 			case <-sig:
-				done = true
-				fmt.Println()
-			case <-timer:
-				//var lastTime = time.Now().Unix()
-				var perfData = &entity.PerfmonData{}
-				var wg = &sync.WaitGroup{}
-				var systemInfo = &entity.SystemInfo{}
-				var procInfo *entity.ProcessInfo
-				if pidStr != "" || packageName != "" {
-					procInfo = &entity.ProcessInfo{
-						Pid:  pidStr,
-						Name: packageName,
-					}
+				return
+			case perfData, ok := <-perfDataChan:
+				if ok {
+					fmt.Println(util.Format(perfData, isFormat, isJson))
 				}
-				setWgCount(wg)
-				go func() {
-					perfmonUtil.GetSystemCPU(device, perfOptions, systemInfo)
-					//fmt.Println(fmt.Sprintf("sys cpu 执行用时: %d s",time.Now().Unix()- lastTime))
-					wg.Done()
-				}()
-				go func() {
-					perfmonUtil.GetSystemMem(device, perfOptions, systemInfo)
-					//fmt.Println(fmt.Sprintf("sys mem 执行用时: %d s",time.Now().Unix()- lastTime))
-					wg.Done()
-				}()
-				go func() {
-					perfmonUtil.GetSystemNetwork(device, perfOptions, systemInfo)
-					//fmt.Println(fmt.Sprintf("sys network 执行用时: %d s",time.Now().Unix()- lastTime))
-					wg.Done()
-				}()
-				go func() {
-					perfmonUtil.GetProcCpu(device, pidStr, perfOptions, procInfo)
-					//fmt.Println(fmt.Sprintf("proc cpu 执行用时: %d s",time.Now().Unix()- lastTime))
-					wg.Done()
-				}()
-				go func() {
-					perfmonUtil.GetProcMem(device, pidStr, perfOptions, procInfo)
-					//fmt.Println(fmt.Sprintf("proc mem 执行用时: %d s",time.Now().Unix()- lastTime))
-					wg.Done()
-				}()
-				go func() {
-					perfmonUtil.GetProcFPS(device, pidStr, packageName, perfOptions, procInfo)
-					//fmt.Println(fmt.Sprintf("proc fps 执行用时: %d s",time.Now().Unix()- lastTime))
-					wg.Done()
-				}()
-				go func() {
-					perfmonUtil.GetProcThreads(device, pidStr, perfOptions, procInfo)
-					//fmt.Println(fmt.Sprintf("proc threads 执行用时: %d s",time.Now().Unix()- lastTime))
-					wg.Done()
-				}()
-				go func() {
-					wg.Add(1)
-					perfData.Activity = perfmonUtil.GetCurrentActivity(device)
-					//fmt.Println(fmt.Sprintf("current activity 执行用时: %d s",time.Now().Unix()- lastTime))
-					wg.Done()
-				}()
-				wg.Wait()
-				perfData.System = systemInfo
-				perfData.Process = procInfo
-				perfData.TimeStamp = time.Now().Unix()
-				data := util.ResultData(perfData)
-				fmt.Println(util.Format(data, isFormat, isJson))
-				//fmt.Println(fmt.Sprintf("执行用时: %d s",time.Now().Unix()- lastTime))
 			}
 		}
 		return nil
@@ -158,30 +110,6 @@ func sysAllParamsSet() {
 	perfOptions.SystemMem = true
 	perfOptions.SystemGPU = true
 	perfOptions.SystemNetWorking = true
-}
-
-func setWgCount(wg *sync.WaitGroup) {
-	if perfOptions.ProcCPU {
-		wg.Add(1)
-	}
-	if perfOptions.ProcMem {
-		wg.Add(1)
-	}
-	if perfOptions.ProcThreads {
-		wg.Add(1)
-	}
-	if perfOptions.ProcFPS {
-		wg.Add(1)
-	}
-	if perfOptions.SystemMem {
-		wg.Add(1)
-	}
-	if perfOptions.SystemNetWorking {
-		wg.Add(1)
-	}
-	if perfOptions.SystemCPU {
-		wg.Add(1)
-	}
 }
 
 func init() {
