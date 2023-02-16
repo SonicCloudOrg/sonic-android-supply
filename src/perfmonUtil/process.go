@@ -202,7 +202,7 @@ func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatu
 			status.NonVoluntaryCtxtSwitches = value
 		}
 	}
-	status.TimeStamp = time.Now().Unix()
+	status.TimeStamp = time.Now().UnixMilli()
 	return status, err1
 }
 
@@ -335,7 +335,7 @@ func newProcessStat(statStr string) (*entity.ProcessStat, error) {
 			}
 		}
 	}
-	processStat.TimeStamp = time.Now().Unix()
+	processStat.TimeStamp = time.Now().UnixMilli()
 	return processStat, nil
 }
 
@@ -426,7 +426,7 @@ func getThreads(client *adb.Device) *entity.ProcessInfo {
 	}
 	processInfo.ThreadInfo = &entity.ProcTreadsInfo{
 		Threads:   threads,
-		TimeStamp: status.TimeStamp,
+		TimeStamp: time.Now().UnixMilli(),
 	}
 
 	processInfo.Pid = appPid
@@ -499,7 +499,7 @@ func getProcCpu(client *adb.Device) *entity.ProcessInfo {
 
 	processInfo.CPUInfo = &entity.ProcCpuInfo{
 		CpuUtilization: getProcCpuUsage(stat),
-		TimeStamp:      stat.TimeStamp,
+		TimeStamp:      time.Now().UnixMilli(),
 	}
 	processInfo.Pid = appPid
 	processInfo.Name = appPackageName
@@ -537,7 +537,7 @@ func getProcMem(client *adb.Device) *entity.ProcessInfo {
 		PhyRSS:    stat.Rss,
 		VmSize:    stat.Vsize,
 		TotalPSS:  pss,
-		TimeStamp: time.Now().Unix(),
+		TimeStamp: time.Now().UnixMilli(),
 	}
 	processInfo.Pid = appPid
 	processInfo.Name = appPackageName
@@ -584,7 +584,7 @@ func getProcessFPSByGFXInfo(client *adb.Device, pid string) (result entity.ProcF
 	} else {
 		result.FPS = frameCount * 60 / (frameCount + vsyncCount)
 	}
-	result.TimeStamp = time.Now().Unix()
+	result.TimeStamp = time.Now().UnixMilli()
 	return
 }
 
@@ -662,7 +662,7 @@ func getProcessFPSBySurfaceFlinger(client *adb.Device, pkg string) (result entit
 		return
 	}
 	result.FPS = (int)(float64(le) * 1000 / (sum(t, le)))
-	result.TimeStamp = time.Now().Unix()
+	result.TimeStamp = time.Now().UnixMilli()
 	return
 }
 
