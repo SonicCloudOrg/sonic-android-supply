@@ -19,13 +19,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"time"
+
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/perfmonUtil"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/util"
 	"github.com/spf13/cobra"
-	"os"
-	"os/signal"
-	"time"
 )
 
 var perfmonCmd = &cobra.Command{
@@ -64,7 +65,6 @@ var perfmonCmd = &cobra.Command{
 			!perfOptions.SystemNetWorking &&
 			!perfOptions.SystemGPU &&
 			!perfOptions.SystemMem {
-			perfmonUtil.IntervalTime = float64(refreshTime)
 			//sysAllParamsSet()
 			perfOptions.ProcMem = true
 			perfOptions.ProcCPU = true
@@ -72,7 +72,7 @@ var perfmonCmd = &cobra.Command{
 			perfOptions.ProcFPS = true
 		}
 		timer := time.Tick(time.Duration(refreshTime * int(time.Millisecond)))
-
+		perfmonUtil.IntervalTime = float64(refreshTime*2) / 1000
 		perfmonUtil.GetPIDAndPackageCurrentActivity(device, packageName, pidStr, timer, sig)
 
 		var perfDataChan = make(chan *entity.PerfmonData)
@@ -94,7 +94,6 @@ var perfmonCmd = &cobra.Command{
 				}
 			}
 		}
-		return nil
 	},
 }
 
@@ -127,7 +126,7 @@ func init() {
 	//perfmonCmd.Flags().BoolVar(&, "proc-network", false, "get process network data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcCPU, "proc-cpu", false, "get process cpu data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcMem, "proc-mem", false, "get process mem data")
-	perfmonCmd.Flags().IntVarP(&refreshTime, "refresh", "r", 1000, "data refresh time (millisecond)")
+	perfmonCmd.Flags().IntVarP(&refreshTime, "interval", "i", 500, "interval refresh time (millisecond)")
 	perfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
 	perfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
 }

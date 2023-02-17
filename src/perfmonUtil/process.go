@@ -366,7 +366,9 @@ func GetPIDAndPackageCurrentActivity(client *adb.Device, packageName, pid string
 			case <-sign:
 				return
 			case <-timer:
-				packageCurrentActivity = getPackageCurrentActivity(client, packageName, pid)
+				go func() {
+					packageCurrentActivity = getPackageCurrentActivity(client, packageName, pid)
+				}()
 			}
 		}
 	}()
@@ -402,9 +404,12 @@ func GetProcThreads(client *adb.Device, perfOptions entity.PerfOption, perfmonDa
 				case <-sign:
 					return
 				case <-timer:
-					perfmonDataChan <- &entity.PerfmonData{
-						Process: getThreads(client),
-					}
+					go func() {
+						perfmonDataChan <- &entity.PerfmonData{
+							Process: getThreads(client),
+						}
+					}()
+
 				}
 			}
 		}()
@@ -443,9 +448,12 @@ func GetProcFPS(client *adb.Device, perfOptions entity.PerfOption, perfmonDataCh
 				case <-sign:
 					return
 				case <-timer:
-					perfmonDataChan <- &entity.PerfmonData{
-						Process: getFPS(client),
-					}
+					go func() {
+						perfmonDataChan <- &entity.PerfmonData{
+							Process: getFPS(client),
+						}
+					}()
+
 				}
 			}
 		}()
@@ -473,16 +481,20 @@ func getFPS(client *adb.Device) *entity.ProcessInfo {
 
 func GetProcCpu(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
 	if perfOptions.ProcCPU {
+		getProcCpu(client)
+		time.Sleep(time.Duration(IntervalTime * float64(time.Second)))
 		go func() {
 			for {
 				select {
 				case <-sign:
 					return
 				case <-timer:
+					go func() {
+						perfmonDataChan <- &entity.PerfmonData{
+							Process: getProcCpu(client),
+						}
+					}()
 
-					perfmonDataChan <- &entity.PerfmonData{
-						Process: getProcCpu(client),
-					}
 				}
 			}
 		}()
@@ -515,9 +527,12 @@ func GetProcMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataCh
 				case <-sign:
 					return
 				case <-timer:
-					perfmonDataChan <- &entity.PerfmonData{
-						Process: getProcMem(client),
-					}
+					go func() {
+						perfmonDataChan <- &entity.PerfmonData{
+							Process: getProcMem(client),
+						}
+					}()
+
 				}
 			}
 		}()
