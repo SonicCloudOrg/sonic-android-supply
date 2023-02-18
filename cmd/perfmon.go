@@ -92,6 +92,7 @@ var perfmonCmd = &cobra.Command{
 			select {
 			case <-sig:
 				exitChancel()
+				os.Exit(0)
 			case perfData, ok := <-perfDataChan:
 				if ok {
 					fmt.Println(util.Format(perfData, isFormat, isJson))
