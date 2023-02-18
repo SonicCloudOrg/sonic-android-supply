@@ -18,10 +18,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 	"github.com/SonicCloudOrg/sonic-android-supply/src/perfmonUtil"
@@ -36,58 +36,62 @@ var perfmonCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		device := util.GetDevice(serial)
 		pidStr := ""
-		if pid == -1 {
+		if pid == -1 && packageName != "" {
 			pidStr, err = perfmonUtil.GetPidOnPackageName(device, packageName)
 			if err != nil {
 				fmt.Println("no corresponding application PID found")
 				os.Exit(0)
 			}
-		} else {
+		} else if pid != -1 && packageName == "" {
 			pidStr = fmt.Sprintf("%d", pid)
+			packageName, err = perfmonUtil.GetNameOnPid(device, pidStr)
+			if err != nil {
+				packageName = ""
+			}
 		}
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, os.Interrupt, os.Kill)
 
-		if (pid == -1 && packageName == "") &&
+		if (pidStr == "" && packageName == "") &&
 			!perfOptions.SystemCPU &&
 			!perfOptions.SystemGPU &&
 			!perfOptions.SystemNetWorking &&
 			!perfOptions.SystemMem {
 			sysAllParamsSet()
 		}
-
-		if (pid != -1 || packageName != "") &&
+		if (pidStr != "" || packageName != "") &&
 			!perfOptions.ProcMem &&
 			!perfOptions.ProcCPU &&
 			!perfOptions.ProcThreads &&
-			!perfOptions.ProcFPS &&
-			!perfOptions.SystemCPU &&
-			!perfOptions.SystemNetWorking &&
-			!perfOptions.SystemGPU &&
-			!perfOptions.SystemMem {
+			!perfOptions.ProcFPS {
 			//sysAllParamsSet()
 			perfOptions.ProcMem = true
 			perfOptions.ProcCPU = true
 			perfOptions.ProcThreads = true
 			perfOptions.ProcFPS = true
 		}
-		timer := time.Tick(time.Duration(refreshTime * int(time.Millisecond)))
-		perfmonUtil.IntervalTime = float64(refreshTime*2) / 1000
-		perfmonUtil.GetPIDAndPackageCurrentActivity(device, packageName, pidStr, timer, sig)
+		perfmonUtil.PackageName = packageName
+		perfmonUtil.Pid = pidStr
+
+		exitCtx, exitChancel := context.WithCancel(context.Background())
+
+		perfmonUtil.GetPIDAndPackageCurrentActivity(device, exitCtx)
+
+		perfmonUtil.IntervalTime = float64(refreshTime) / 1000
 
 		var perfDataChan = make(chan *entity.PerfmonData)
-		perfmonUtil.GetSystemCPU(device, perfOptions, perfDataChan, timer, sig)
-		perfmonUtil.GetSystemMem(device, perfOptions, perfDataChan, timer, sig)
-		perfmonUtil.GetSystemNetwork(device, perfOptions, perfDataChan, timer, sig)
-		perfmonUtil.GetProcCpu(device, perfOptions, perfDataChan, timer, sig)
-		perfmonUtil.GetProcMem(device, perfOptions, perfDataChan, timer, sig)
-		perfmonUtil.GetProcFPS(device, perfOptions, perfDataChan, timer, sig)
-		perfmonUtil.GetProcThreads(device, perfOptions, perfDataChan, timer, sig)
+		perfmonUtil.GetSystemCPU(device, perfOptions, perfDataChan, exitCtx)
+		perfmonUtil.GetSystemMem(device, perfOptions, perfDataChan, exitCtx)
+		perfmonUtil.GetSystemNetwork(device, perfOptions, perfDataChan, exitCtx)
+		perfmonUtil.GetProcCpu(device, perfOptions, perfDataChan, exitCtx)
+		perfmonUtil.GetProcMem(device, perfOptions, perfDataChan, exitCtx)
+		perfmonUtil.GetProcFPS(device, perfOptions, perfDataChan, exitCtx)
+		perfmonUtil.GetProcThreads(device, perfOptions, perfDataChan, exitCtx)
 
 		for {
 			select {
 			case <-sig:
-				return
+				exitChancel()
 			case perfData, ok := <-perfDataChan:
 				if ok {
 					fmt.Println(util.Format(perfData, isFormat, isJson))
@@ -126,7 +130,7 @@ func init() {
 	//perfmonCmd.Flags().BoolVar(&, "proc-network", false, "get process network data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcCPU, "proc-cpu", false, "get process cpu data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcMem, "proc-mem", false, "get process mem data")
-	perfmonCmd.Flags().IntVarP(&refreshTime, "interval", "i", 500, "interval refresh time (millisecond)")
+	perfmonCmd.Flags().IntVarP(&refreshTime, "refresh", "r", 1000, "data refresh time (millisecond)")
 	perfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
 	perfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
 }

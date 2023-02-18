@@ -19,8 +19,8 @@ package perfmonUtil
 
 import (
 	"bufio"
+	"context"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -29,14 +29,15 @@ import (
 	"github.com/SonicCloudOrg/sonic-android-supply/src/entity"
 )
 
-func GetSystemCPU(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
+func GetSystemCPU(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, sign context.Context) {
 	if perfOptions.SystemCPU {
 		_ = getCPU(client, &entity.SystemInfo{})
 		time.Sleep(time.Duration(IntervalTime * float64(time.Second)))
+		timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 		go func() {
 			for {
 				select {
-				case <-sign:
+				case <-sign.Done():
 					return
 				case <-timer:
 					go func() {
@@ -59,11 +60,14 @@ func GetSystemCPU(client *adb.Device, perfOptions entity.PerfOption, perfmonData
 	return
 }
 
-func GetSystemMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
+func GetSystemMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, sign context.Context) {
 	if perfOptions.SystemMem {
+		timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 		go func() {
 			for {
 				select {
+				case <-sign.Done():
+					return
 				case <-timer:
 					go func() {
 						systemInfo := &entity.SystemInfo{}
@@ -87,11 +91,14 @@ func GetSystemMem(client *adb.Device, perfOptions entity.PerfOption, perfmonData
 	return
 }
 
-func GetSystemNetwork(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
+func GetSystemNetwork(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, sign context.Context) {
 	if perfOptions.SystemNetWorking {
+		timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 		go func() {
 			for {
 				select {
+				case <-sign.Done():
+					return
 				case <-timer:
 					go func() {
 						systemInfo := &entity.SystemInfo{}

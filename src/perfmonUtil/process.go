@@ -19,11 +19,11 @@ package perfmonUtil
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"math"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -354,24 +354,44 @@ var preTick = -1.0
 var IntervalTime = 1.0 // # seconds
 var HZ = 100.0         //# ticks/second
 var packageCurrentActivity = ""
-var appPackageName = ""
-var appPid = ""
+var PackageName = ""
+var Pid = ""
 
-func GetPIDAndPackageCurrentActivity(client *adb.Device, packageName, pid string, timer <-chan time.Time, sign chan os.Signal) {
-	appPid = pid
-	appPackageName = packageName
+func GetPIDAndPackageCurrentActivity(client *adb.Device, sign context.Context) {
+	timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 	go func() {
 		for {
 			select {
-			case <-sign:
+			case <-sign.Done():
 				return
 			case <-timer:
 				go func() {
-					packageCurrentActivity = getPackageCurrentActivity(client, packageName, pid)
+					packageCurrentActivity = getPackageCurrentActivity(client, PackageName, Pid)
 				}()
 			}
 		}
 	}()
+}
+
+func GetNameOnPid(client *adb.Device, pid string) (string, error) {
+	lines, err := client.OpenShell("ps -A")
+	if err != nil {
+		panic(err)
+	}
+	data, err := ioutil.ReadAll(lines)
+	if err != nil {
+		panic(err)
+	}
+	reg := regexp.MustCompile(fmt.Sprintf(".*\\s+(%s)(\\s+\\d+){5}\\s\\S+\\s\\S+", pid))
+	regResult := reg.FindString(string(data))
+	reg = regexp.MustCompile("\\s+")
+	regResult = reg.ReplaceAllString(regResult, " ")
+	dataSplit := strings.Split(regResult, " ")
+	if len(dataSplit) < 2 {
+		return "", errors.New("unable to find the pid corresponding to app")
+	}
+	name := dataSplit[len(dataSplit)-1]
+	return name, nil
 }
 
 func getPackageCurrentActivity(client *adb.Device, packageName string, pid string) string {
@@ -393,15 +413,19 @@ func getPackageCurrentActivity(client *adb.Device, packageName string, pid strin
 	if len(dataSplit) < 2 {
 		return ""
 	}
+	if dataSplit[1] == "MANAGER" {
+		return ""
+	}
 	return dataSplit[1]
 }
 
-func GetProcThreads(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
+func GetProcThreads(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, sign context.Context) {
 	if perfOptions.ProcThreads {
+		timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 		go func() {
 			for {
 				select {
-				case <-sign:
+				case <-sign.Done():
 					return
 				case <-timer:
 					go func() {
@@ -419,7 +443,7 @@ func GetProcThreads(client *adb.Device, perfOptions entity.PerfOption, perfmonDa
 
 func getThreads(client *adb.Device) *entity.ProcessInfo {
 	processInfo := &entity.ProcessInfo{}
-	status, err := getStatusOnPid(client, appPid)
+	status, err := getStatusOnPid(client, Pid)
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
 	}
@@ -434,18 +458,19 @@ func getThreads(client *adb.Device) *entity.ProcessInfo {
 		TimeStamp: time.Now().UnixMilli(),
 	}
 
-	processInfo.Pid = appPid
-	processInfo.Name = appPackageName
+	processInfo.Pid = Pid
+	processInfo.Name = PackageName
 	processInfo.Activity = packageCurrentActivity
 	return processInfo
 }
 
-func GetProcFPS(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
+func GetProcFPS(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, sign context.Context) {
 	if perfOptions.ProcFPS {
+		timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 		go func() {
 			for {
 				select {
-				case <-sign:
+				case <-sign.Done():
 					return
 				case <-timer:
 					go func() {
@@ -463,30 +488,31 @@ func GetProcFPS(client *adb.Device, perfOptions entity.PerfOption, perfmonDataCh
 
 func getFPS(client *adb.Device) *entity.ProcessInfo {
 	processInfo := &entity.ProcessInfo{}
-	fpsInfo, err := getProcessFPSBySurfaceFlinger(client, appPackageName)
+	fpsInfo, err := getProcessFPSBySurfaceFlinger(client, PackageName)
 
 	if fpsInfo.FPS <= 0 || err != nil {
-		fpsInfo, err = getProcessFPSByGFXInfo(client, appPid)
+		fpsInfo, err = getProcessFPSByGFXInfo(client, Pid)
 	}
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
 	}
 	processInfo.FPSInfo = &fpsInfo
 
-	processInfo.Pid = appPid
-	processInfo.Name = appPackageName
+	processInfo.Pid = Pid
+	processInfo.Name = PackageName
 	processInfo.Activity = packageCurrentActivity
 	return processInfo
 }
 
-func GetProcCpu(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
+func GetProcCpu(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, sign context.Context) {
 	if perfOptions.ProcCPU {
 		getProcCpu(client)
 		time.Sleep(time.Duration(IntervalTime * float64(time.Second)))
+		timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 		go func() {
 			for {
 				select {
-				case <-sign:
+				case <-sign.Done():
 					return
 				case <-timer:
 					go func() {
@@ -504,7 +530,7 @@ func GetProcCpu(client *adb.Device, perfOptions entity.PerfOption, perfmonDataCh
 
 func getProcCpu(client *adb.Device) *entity.ProcessInfo {
 	processInfo := &entity.ProcessInfo{}
-	stat, err := getStatOnPid(client, appPid)
+	stat, err := getStatOnPid(client, Pid)
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
 	}
@@ -513,18 +539,19 @@ func getProcCpu(client *adb.Device) *entity.ProcessInfo {
 		CpuUtilization: getProcCpuUsage(stat),
 		TimeStamp:      time.Now().UnixMilli(),
 	}
-	processInfo.Pid = appPid
-	processInfo.Name = appPackageName
+	processInfo.Pid = Pid
+	processInfo.Name = PackageName
 	processInfo.Activity = packageCurrentActivity
 	return processInfo
 }
 
-func GetProcMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, timer <-chan time.Time, sign chan os.Signal) {
+func GetProcMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataChan chan *entity.PerfmonData, sign context.Context) {
 	if perfOptions.ProcMem {
+		timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 		go func() {
 			for {
 				select {
-				case <-sign:
+				case <-sign.Done():
 					return
 				case <-timer:
 					go func() {
@@ -543,8 +570,8 @@ func GetProcMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataCh
 
 func getProcMem(client *adb.Device) *entity.ProcessInfo {
 	processInfo := &entity.ProcessInfo{}
-	pss, _ := getMemTotalPSS(client, appPid)
-	stat, err := getStatOnPid(client, appPid)
+	pss, _ := getMemTotalPSS(client, Pid)
+	stat, err := getStatOnPid(client, Pid)
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
 	}
@@ -554,8 +581,8 @@ func getProcMem(client *adb.Device) *entity.ProcessInfo {
 		TotalPSS:  pss,
 		TimeStamp: time.Now().UnixMilli(),
 	}
-	processInfo.Pid = appPid
-	processInfo.Name = appPackageName
+	processInfo.Pid = Pid
+	processInfo.Name = PackageName
 	processInfo.Activity = packageCurrentActivity
 	return processInfo
 }
