@@ -32,6 +32,30 @@
 >
 > 如果你想支持，可以给我一个star。⭐
 
+## 快速使用
+
+#### 1. 下载
+[click here](https://github.com/SonicCloudOrg/sonic-android-supply/releases)
+
+#### 2. 执行指令 (windows不需要)
+```
+sudo chmod 777 ./sas && ./sas version
+```
+
+#### 3. 添加sas路径到本机PATH
+Finish!
+
+
+## 功能
+
+```
+sas share -s xxxxxx
+sas perfmon -p com.android.browser
+...
+```
+👉[ (推荐) 点击这里查看更多!](https://sonic-cloud.cn/sas/sas-perf.html)
+
+
 ## 感谢
 
 - [https://github.com/codeskyblue/fa](https://github.com/codeskyblue/fa)
