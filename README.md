@@ -32,6 +32,27 @@
 >
 >If you want to support, you can give me a star. ⭐
 
+## Usage
+
+#### 1. Download
+[click here](https://github.com/SonicCloudOrg/sonic-android-supply/releases)
+#### 2. execute shell (No need for windows)
+```
+sudo chmod 777 ./sas && ./sas version
+```
+#### 3. Add sas to your PATH
+Finish!
+
+
+## Function
+
+```
+sas share -s xxxxxx
+sas perfmon -p com.android.browser
+...
+```
+👉[ (Recommend) Click Here to Get More!](https://sonic-cloud.cn/sas/sas-perf.html)
+
 ## Thanks
 
 - [https://github.com/codeskyblue/fa](https://github.com/codeskyblue/fa)
