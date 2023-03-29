@@ -571,13 +571,13 @@ func GetProcMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataCh
 func getProcMem(client *adb.Device) *entity.ProcessInfo {
 	processInfo := &entity.ProcessInfo{}
 	pss, _ := getMemTotalPSS(client, Pid)
-	stat, err := getStatOnPid(client, Pid)
+	status, err := getStatusOnPid(client, Pid)
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
 	}
 	processInfo.MemInfo = &entity.ProcMemInfo{
-		PhyRSS:    stat.Rss,
-		VmSize:    stat.Vsize,
+		VmSize:    status.VmSize,
+		PhyRSS:    status.VmRSS,
 		TotalPSS:  pss,
 		TimeStamp: time.Now().UnixMilli(),
 	}
