@@ -575,9 +575,11 @@ func getProcMem(client *adb.Device) *entity.ProcessInfo {
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
 	}
+	vSize, _ := strconv.Atoi(status.VmSize)
+	pRss, _ := strconv.Atoi(status.VmRSS)
 	processInfo.MemInfo = &entity.ProcMemInfo{
-		VmSize:    status.VmSize,
-		PhyRSS:    status.VmRSS,
+		VmSize:    vSize,
+		PhyRSS:    pRss,
 		TotalPSS:  pss,
 		TimeStamp: time.Now().UnixMilli(),
 	}
