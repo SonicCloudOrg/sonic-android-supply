@@ -20,7 +20,7 @@
   </a>
 </p>
 
-## Official Website
+## Document
 [Sonic Official Website](https://sonic-cloud.cn/sas/re-sas.html)
 
 ## Usage
