@@ -40,7 +40,7 @@ func getStatOnPid(client *adb.Device, pid string) (stat *entity.ProcessStat, err
 	}
 	data, err := ioutil.ReadAll(lines)
 	if err != nil {
-		return
+		return nil, err
 	}
 	return newProcessStat(string(data))
 }
@@ -68,6 +68,13 @@ func getMemTotalPSS(client *adb.Device, pid string) (result int, err error) {
 	lines, err := client.OpenShell(fmt.Sprintf("dumpsys meminfo --local %s", pid))
 	if err != nil {
 		return
+	}
+	data, err := ioutil.ReadAll(lines)
+	if err != nil {
+		return 0, err
+	}
+	if strings.Contains(string(data), "No process found for") {
+		return 0, errors.New(string(data))
 	}
 	scanner := bufio.NewScanner(lines)
 	for scanner.Scan() {
@@ -101,7 +108,10 @@ func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatu
 	}
 	data, err := ioutil.ReadAll(lines)
 	if err != nil {
-		return
+		return nil, err
+	}
+	if strings.Contains(string(data), "No such file or directory") {
+		return nil, errors.New(string(data))
 	}
 	scanner := bufio.NewScanner(strings.NewReader(string(data)))
 	status = &entity.ProcessStatus{}
@@ -207,6 +217,9 @@ func getStatusOnPid(client *adb.Device, pid string) (status *entity.ProcessStatu
 }
 
 func newProcessStat(statStr string) (*entity.ProcessStat, error) {
+	if strings.Contains(statStr, "No such file or directory") {
+		return nil, errors.New(statStr)
+	}
 	params := strings.Split(statStr, " ")
 	var processStat = &entity.ProcessStat{}
 	for i, value := range params {
@@ -356,8 +369,9 @@ var HZ = 100.0         //# ticks/second
 var packageCurrentActivity = ""
 var PackageName = ""
 var Pid = ""
+var IsForce = false
 
-func GetPIDAndPackageCurrentActivity(client *adb.Device, sign context.Context) {
+func UpdatePIDAndPackageCurrentActivity(client *adb.Device, sign context.Context) {
 	timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 	go func() {
 		for {
@@ -366,6 +380,15 @@ func GetPIDAndPackageCurrentActivity(client *adb.Device, sign context.Context) {
 				return
 			case <-timer:
 				go func() {
+					if IsForce {
+						pid, _ := GetPidOnPackageName(client, PackageName)
+						if pid != "" {
+							Pid = pid
+						}
+					}
+					//if err!=nil {
+					//	println("")
+					//}
 					packageCurrentActivity = getPackageCurrentActivity(client, PackageName, Pid)
 				}()
 			}
@@ -443,9 +466,12 @@ func GetProcThreads(client *adb.Device, perfOptions entity.PerfOption, perfmonDa
 
 func getThreads(client *adb.Device) *entity.ProcessInfo {
 	processInfo := &entity.ProcessInfo{}
+	processInfo.Pid = Pid
+	processInfo.Name = PackageName
 	status, err := getStatusOnPid(client, Pid)
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
+		return processInfo
 	}
 	var threads int
 	if len(status.Threads) > 0 {
@@ -458,8 +484,6 @@ func getThreads(client *adb.Device) *entity.ProcessInfo {
 		TimeStamp: time.Now().UnixMilli(),
 	}
 
-	processInfo.Pid = Pid
-	processInfo.Name = PackageName
 	processInfo.Activity = packageCurrentActivity
 	return processInfo
 }
@@ -530,17 +554,19 @@ func GetProcCpu(client *adb.Device, perfOptions entity.PerfOption, perfmonDataCh
 
 func getProcCpu(client *adb.Device) *entity.ProcessInfo {
 	processInfo := &entity.ProcessInfo{}
+	processInfo.Pid = Pid
+	processInfo.Name = PackageName
 	stat, err := getStatOnPid(client, Pid)
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
+		return processInfo
 	}
 
 	processInfo.CPUInfo = &entity.ProcCpuInfo{
 		CpuUtilization: getProcCpuUsage(stat),
 		TimeStamp:      time.Now().UnixMilli(),
 	}
-	processInfo.Pid = Pid
-	processInfo.Name = PackageName
+
 	processInfo.Activity = packageCurrentActivity
 	return processInfo
 }
@@ -570,21 +596,27 @@ func GetProcMem(client *adb.Device, perfOptions entity.PerfOption, perfmonDataCh
 
 func getProcMem(client *adb.Device) *entity.ProcessInfo {
 	processInfo := &entity.ProcessInfo{}
-	pss, _ := getMemTotalPSS(client, Pid)
-	status, err := getStatusOnPid(client, Pid)
+	processInfo.Pid = Pid
+	processInfo.Name = PackageName
+
+	pss, err := getMemTotalPSS(client, Pid)
 	if err != nil {
 		processInfo.Error = append(processInfo.Error, err.Error())
+		return processInfo
 	}
-	vSize, _ := strconv.Atoi(strings.TrimSpace(strings.Split(status.VmSize," ")[0]))
-	pRss, _ := strconv.Atoi(strings.TrimSpace(strings.Split(status.VmRSS," ")[0]))
+	status, err1 := getStatusOnPid(client, Pid)
+	if err1 != nil {
+		processInfo.Error = append(processInfo.Error, err1.Error())
+		return processInfo
+	}
+	vSize, _ := strconv.Atoi(strings.TrimSpace(strings.Split(status.VmSize, " ")[0]))
+	pRss, _ := strconv.Atoi(strings.TrimSpace(strings.Split(status.VmRSS, " ")[0]))
 	processInfo.MemInfo = &entity.ProcMemInfo{
 		VmSize:    vSize,
 		PhyRSS:    pRss,
 		TotalPSS:  pss,
 		TimeStamp: time.Now().UnixMilli(),
 	}
-	processInfo.Pid = Pid
-	processInfo.Name = PackageName
 	processInfo.Activity = packageCurrentActivity
 	return processInfo
 }

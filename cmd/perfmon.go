@@ -36,6 +36,9 @@ var perfmonCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		device := util.GetDevice(serial)
 		pidStr := ""
+		if isForce {
+			perfmonUtil.IsForce = true
+		}
 		if pid == -1 && packageName != "" {
 			pidStr, err = perfmonUtil.GetPidOnPackageName(device, packageName)
 			if err != nil {
@@ -75,7 +78,7 @@ var perfmonCmd = &cobra.Command{
 
 		exitCtx, exitChancel := context.WithCancel(context.Background())
 
-		perfmonUtil.GetPIDAndPackageCurrentActivity(device, exitCtx)
+		perfmonUtil.UpdatePIDAndPackageCurrentActivity(device, exitCtx)
 
 		perfmonUtil.IntervalTime = float64(refreshTime) / 1000
 
@@ -107,6 +110,7 @@ var (
 	pid         int
 	packageName string
 	refreshTime int
+	isForce     bool
 )
 
 func sysAllParamsSet() {
@@ -131,6 +135,7 @@ func init() {
 	//perfmonCmd.Flags().BoolVar(&, "proc-network", false, "get process network data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcCPU, "proc-cpu", false, "get process cpu data")
 	perfmonCmd.Flags().BoolVar(&perfOptions.ProcMem, "proc-mem", false, "get process mem data")
+	perfmonCmd.Flags().BoolVar(&isForce, "force-out", false, "force update pid perf data(applicable to applications being restarted by kill)")
 	perfmonCmd.Flags().IntVarP(&refreshTime, "refresh", "r", 1000, "data refresh time (millisecond)")
 	perfmonCmd.Flags().BoolVarP(&isFormat, "format", "f", false, "convert to JSON string and format")
 	perfmonCmd.Flags().BoolVarP(&isJson, "json", "j", false, "convert to JSON string")
