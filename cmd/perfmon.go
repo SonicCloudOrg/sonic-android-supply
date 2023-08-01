@@ -38,14 +38,12 @@ var perfmonCmd = &cobra.Command{
 		pidStr := ""
 		if isForce {
 			perfmonUtil.IsForce = true
-		}
-		if pid == -1 && packageName != "" {
-			pidStr, err = perfmonUtil.GetPidOnPackageName(device, packageName)
-			if err != nil {
-				fmt.Println("no corresponding application PID found")
+			if packageName == "" {
+				fmt.Println("please enter packageName.")
 				os.Exit(0)
 			}
-		} else if pid != -1 && packageName == "" {
+		}
+		if pid != -1 && packageName == "" {
 			pidStr = fmt.Sprintf("%d", pid)
 			packageName, err = perfmonUtil.GetNameOnPid(device, pidStr)
 			if err != nil {
