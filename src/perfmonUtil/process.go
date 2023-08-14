@@ -76,25 +76,11 @@ func getMemTotalPSS(client *adb.Device, pid string) (result int, err error) {
 	if strings.Contains(string(data), "No process found for") {
 		return 0, errors.New(string(data))
 	}
-	scanner := bufio.NewScanner(lines)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "TOTAL") {
-			s := strings.Split(line, " ")
-			flag := false
-			for _, v := range s {
-				if len(v) == 0 {
-					continue
-				}
-				if v == "TOTAL" {
-					flag = true
-					continue
-				}
-				if flag {
-					result, _ = strconv.Atoi(v)
-					break
-				}
-			}
+	s := strings.Split(string(data), "\n")
+	for _, v := range s {
+		if strings.Contains(v, "TOTAL:") {
+			result, _ = strconv.Atoi(strings.TrimSpace(
+				v[strings.Index(v, "TOTAL:")+6 : strings.LastIndex(v, "TOTAL")]))
 			break
 		}
 	}
