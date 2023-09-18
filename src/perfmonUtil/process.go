@@ -77,11 +77,41 @@ func getMemTotalPSS(client *adb.Device, pid string) (result int, err error) {
 		return 0, errors.New(string(data))
 	}
 	s := strings.Split(string(data), "\n")
-	for _, v := range s {
-		if strings.Contains(v, "TOTAL:") {
-			result, _ = strconv.Atoi(strings.TrimSpace(
-				v[strings.Index(v, "TOTAL:")+6 : strings.LastIndex(v, "TOTAL")]))
-			break
+
+	isGetMem := false
+	maxLineLen := 0
+	for i, v := range s {
+		v = strings.ReplaceAll(v, "\n", "")
+		v = strings.ReplaceAll(v, "\r", "")
+		if strings.Contains(v, "App Summary") {
+			if i+1 < len(s) {
+				v = strings.ReplaceAll(s[i+1], "\n", "")
+				v = strings.ReplaceAll(v, "\r", "")
+			}
+			maxLineLen = len(v)
+			isGetMem = true
+			continue
+		}
+
+		if isGetMem && strings.Contains(v, ":") {
+			if strings.Contains(v, "TOTAL") {
+				continue
+			}
+			temp := strings.Split(v, ":")
+			if len(temp) < 1 {
+				continue
+			}
+			value := strings.Split(strings.TrimLeft(temp[1], " "), " ")[0]
+			lastIndex := strings.LastIndex(v, value)
+			// if the maximum length is reached skip directly
+			if lastIndex+len(value) >= maxLineLen {
+				continue
+			}
+			memValue, err1 := strconv.Atoi(value)
+			if err1 != nil {
+				panic(err1)
+			}
+			result += memValue
 		}
 	}
 	return
