@@ -388,6 +388,7 @@ var Pid = ""
 var IsForce = false
 
 func UpdatePIDAndPackageCurrentActivity(client *adb.Device, sign context.Context) {
+	Pid, _ = GetPidOnPackageName(client, PackageName)
 	timer := time.Tick(time.Duration(int(IntervalTime * float64(time.Second))))
 	go func() {
 		for {
